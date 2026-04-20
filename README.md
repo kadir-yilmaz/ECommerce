@@ -20,7 +20,7 @@ Uygulama kapsamında aşağıdaki ileri seviye teknikler uygulanmıştır:
 ### CQRS & MediatR
 Komut ve sorguların (Command/Query) birbirinden ayrılması sağlanarak uygulama karmaşıklığı azaltılmış ve performansı optimize edilmiştir. Tüm işlemler **MediatR** kütüphanesi üzerinden yürütülmektedir.
 
-### 📝 Gelişmiş Loglama (Serilog)
+### Gelişmiş Loglama (Serilog)
 **Serilog** entegrasyonu ile merkezi bir loglama yapısı kurulmuştur:
 - **Hiyerarşik Kayıt**: Loglar; SQL Server, Seq, Console ve dosya bazlı (File) olarak birden fazla kanala aktarılır.
 - **Özel Filtreleme**: `Serilog.Expressions` kullanılarak loglar hata seviyelerine (`errors/`), metod tiplerine (`http-get/`, `http-post/`) ve genel bilgilere (`general/`) göre otomatik olarak ayrıştırılır.
