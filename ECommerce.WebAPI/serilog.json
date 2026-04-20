@@ -1,0 +1,158 @@
+{
+  "Serilog": {
+    "Using": [ "Serilog.Expressions", "Serilog.Sinks.Console", "Serilog.Sinks.File", "Serilog.Sinks.MSSqlServer", "Serilog.Sinks.Seq" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning",
+        "Microsoft.AspNetCore.HttpLogging": "Information"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/all/all-.txt",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30,
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://localhost:5341"
+        }
+      },
+      {
+        "Name": "MSSqlServer",
+        "Args": {
+          "connectionString": "sqlConnection",
+          "sinkOptionsSection": {
+            "tableName": "Logs",
+            "autoCreateSqlTable": true
+          },
+          "columnOptionsSection": {
+            "removeStandardColumns": [ "MessageTemplate" ],
+            "addStandardColumns": [ "LogEvent" ],
+            "customColumns": [
+              {
+                "ColumnName": "user_name",
+                "DataType": "NVarChar",
+                "DataLength": 50,
+                "AllowNull": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "@l in ['Warning', 'Error', 'Fatal']",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/errors/error-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}{NewLine}---{NewLine}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "RequestMethod = 'GET'",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/http-get/get-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss}] {RequestMethod} {RequestPath} -> {StatusCode} ({Elapsed:0.0}ms){NewLine}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "RequestMethod = 'POST'",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/http-post/post-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss}] {RequestMethod} {RequestPath} -> {StatusCode} ({Elapsed:0.0}ms){NewLine}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "RequestMethod = 'PUT'",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/http-put/put-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss}] {RequestMethod} {RequestPath} -> {StatusCode} ({Elapsed:0.0}ms){NewLine}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "RequestMethod = 'DELETE'",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/http-delete/delete-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss}] {RequestMethod} {RequestPath} -> {StatusCode} ({Elapsed:0.0}ms){NewLine}"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "Name": "Conditional",
+        "Args": {
+          "expression": "RequestMethod is null and @l in ['Information', 'Warning']",
+          "configureSink": [
+            {
+              "Name": "File",
+              "Args": {
+                "path": "logs/general/info-.txt",
+                "rollingInterval": "Day",
+                "retainedFileCountLimit": 30,
+                "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext" ]
+  }
+}

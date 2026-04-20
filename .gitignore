@@ -1,0 +1,38 @@
+# .gitignore for .NET
+
+# User-specific files
+.env
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa]rm/
+[Aa]rm64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017/2019 cache/options directory
+.vs/
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# Packages
+*.nupkg
+
+# Others
+seq-data/
+.kiro/
+.dotnet/
