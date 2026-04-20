@@ -17,7 +17,7 @@ Proje, bağımlılıkların iç katmanlara doğru olduğu ve çekirdek (Core) ma
 
 Uygulama kapsamında aşağıdaki ileri seviye teknikler uygulanmıştır:
 
-### 🔄 CQRS & MediatR
+### CQRS & MediatR
 Komut ve sorguların (Command/Query) birbirinden ayrılması sağlanarak uygulama karmaşıklığı azaltılmış ve performansı optimize edilmiştir. Tüm işlemler **MediatR** kütüphanesi üzerinden yürütülmektedir.
 
 ### 📝 Gelişmiş Loglama (Serilog)
@@ -25,15 +25,15 @@ Komut ve sorguların (Command/Query) birbirinden ayrılması sağlanarak uygulam
 - **Hiyerarşik Kayıt**: Loglar; SQL Server, Seq, Console ve dosya bazlı (File) olarak birden fazla kanala aktarılır.
 - **Özel Filtreleme**: `Serilog.Expressions` kullanılarak loglar hata seviyelerine (`errors/`), metod tiplerine (`http-get/`, `http-post/`) ve genel bilgilere (`general/`) göre otomatik olarak ayrıştırılır.
 
-### 🔐 Güvenlik ve Yetkilendirme (Identity & JWT)
+### Güvenlik ve Yetkilendirme (Identity & JWT)
 - **Role-Based Auth**: Her bir Action için hassas yetkilendirme yapılabilen özel `RolePermissionFilter` filtresi.
 - **JWT Authentication**: "Admin" şeması özelinde yapılandırılmış güvenli token yönetimi.
 - **Secret Management**: Hassas veriler (Mail şifreleri, API keyleri) `.env` dosyaları ile dış dünyadan izole edilmiştir.
 
-### 📡 Real-time Updates (SignalR)
+### Real-time Updates (SignalR)
 Ürün eklendiğinde veya sipariş verildiğinde istemci tarafına anlık bildirimler gönderen Hub sistemleri entegre edilmiştir.
 
-### 🛠️ Diğer Teknikler
+### Diğer Teknikler
 - **Global Exception Handling**: Tüm uygulamadaki hataları merkezi olarak yakalayan ve loglayan middleware yapısı.
 - **FluentValidation**: İstek modelleri için merkezi ve otomatik doğrulama sistemi.
 - **Caching**: Performance optimizasyonu için **Redis** entegrasyonu.
@@ -48,4 +48,3 @@ Komut ve sorguların (Command/Query) birbirinden ayrılması sağlanarak uygulam
 5. Uygulamayı ayağa kaldırın: `dotnet run --project .\ECommerce.WebAPI\`.
 
 ---
-*Geliştiren: Kadir Yılmaz*
