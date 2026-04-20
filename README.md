@@ -1,4 +1,4 @@
-# E-Commerce Web API & Management System
+# E-Commerce
 
 Bu proje, **Onion Architecture** prensipleri üzerine inşa edilmiş, ölçeklenebilir ve yüksek performanslı bir E-Ticaret backend sistemidir. Kurumsal mimari modelleri ve modern yazılım pratikleri (CQRS, MediatR, Serilog vb.) kullanılarak geliştirilmiştir.
 
