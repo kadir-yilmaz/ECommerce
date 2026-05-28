@@ -26,4 +26,8 @@
     <ProjectReference Include="..\ECommerce.SignalR\ECommerce.SignalR.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

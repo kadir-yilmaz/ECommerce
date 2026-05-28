@@ -43,3 +43,11 @@ bld/
 seq-data/
 .kiro/
 .dotnet/
+
+# Ignore uploaded images
+**/wwwroot/campaign-images/
+**/wwwroot/images/
+**/wwwroot/**/*.png
+**/wwwroot/**/*.jpg
+**/wwwroot/**/*.jpeg
+**/wwwroot/**/*.webp

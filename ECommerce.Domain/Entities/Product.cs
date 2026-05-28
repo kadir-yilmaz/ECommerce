@@ -7,6 +7,7 @@ namespace ECommerce.Domain.Entities
         {
             ProductImageFiles = new HashSet<ProductImageFile>();
             BasketItems = new HashSet<BasketItem>();
+            FavoriteItems = new HashSet<FavoriteItem>();
         }
         public string Name { get; set; }
         public int Stock { get; set; }
@@ -15,5 +16,6 @@ namespace ECommerce.Domain.Entities
         //public ICollection<Order> Orders { get; set; }
         public ICollection<ProductImageFile> ProductImageFiles { get; set; }
         public ICollection<BasketItem> BasketItems { get; set; }
+        public ICollection<FavoriteItem> FavoriteItems { get; set; }
     }
 }

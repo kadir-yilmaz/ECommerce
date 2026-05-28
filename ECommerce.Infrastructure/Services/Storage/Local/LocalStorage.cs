@@ -14,7 +14,11 @@ namespace ECommerce.Infrastructure.Services.Storage.Local
         public async Task DeleteAsync(string path, string fileName)
         {
             string webRootPath = _webHostEnvironment.WebRootPath ?? Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
-            File.Delete(Path.Combine(webRootPath, path, fileName));
+            string filePath = Path.Combine(webRootPath, path, fileName);
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
         }
 
         public List<string> GetFiles(string path)

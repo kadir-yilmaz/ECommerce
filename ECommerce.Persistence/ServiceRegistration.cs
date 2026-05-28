@@ -43,6 +43,10 @@ namespace ECommerce.Persistence
             services.AddScoped<IBasketWriteRepository, BasketWriteRepository>();
             services.AddScoped<IBasketItemReadRepository, BasketItemReadRepository>();
             services.AddScoped<IBasketItemWriteRepository, BasketItemWriteRepository>();
+            services.AddScoped<IFavoriteReadRepository, FavoriteReadRepository>();
+            services.AddScoped<IFavoriteWriteRepository, FavoriteWriteRepository>();
+            services.AddScoped<IFavoriteItemReadRepository, FavoriteItemReadRepository>();
+            services.AddScoped<IFavoriteItemWriteRepository, FavoriteItemWriteRepository>();
             services.AddScoped<ICustomerReadRepository, CustomerReadRepository>();
             services.AddScoped<ICustomerWriteRepository, CustomerWriteRepository>();
             services.AddScoped<IOrderReadRepository, OrderReadRepository>();
@@ -50,12 +54,16 @@ namespace ECommerce.Persistence
             services.AddScoped<ICompletedOrderReadRepository, CompletedOrderReadRepository>();
             services.AddScoped<ICompletedOrderWriteRepository, CompletedOrderWriteRepository>();
 
+            services.AddScoped<ICampaignImageFileReadRepository, CampaignImageFileReadRepository>();
+            services.AddScoped<ICampaignImageFileWriteRepository, CampaignImageFileWriteRepository>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IExternalAuthentication, AuthService>();
             services.AddScoped<IInternalAuthentication, AuthService>();
             services.AddScoped<IAuthorizationEndpointService, AuthorizationEndpointService>();
             services.AddScoped<IBasketService, BasketService>();
+            services.AddScoped<IFavoriteService, FavoriteService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IProductService, ProductService>();
