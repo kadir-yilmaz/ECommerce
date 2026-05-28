@@ -15,10 +15,6 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
         readonly IProductReadRepository _productReadRepository;
         readonly ICategoryReadRepository _categoryReadRepository;
 
-        private static readonly List<string> PopularBrands = new()
-        {
-            "Corsair", "Apple", "Dell", "Logitech", "L'Oreal", "Maybelline", "Nike", "Adidas", "Puma", "Samsung", "HP", "Asus", "Lenovo", "Beko", "Vestel"
-        };
 
         public GetSearchSuggestionsQueryHandler(IProductReadRepository productReadRepository, ICategoryReadRepository categoryReadRepository)
         {
@@ -35,8 +31,20 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
             var q = request.Q.Trim().ToLower();
 
             // 1. BRAND MATCHES (Marka)
-            var matchedBrands = PopularBrands
-                .Where(b => b.ToLower().StartsWith(q) || b.ToLower().Contains(q))
+            // Ürün adının ilk kelimesi marka kabul edilir.
+            // "cor" → DB'de adı "cor" içeren ürünlerin ilk kelimesi → "Corsair" gibi
+            var brandCandidateNames = await _productReadRepository.GetAll(false)
+                .Where(p => p.Name.ToLower().Contains(q))
+                .Select(p => p.Name)
+                .ToListAsync(cancellationToken);
+
+            var matchedBrands = brandCandidateNames
+                .Select(name => name.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0])
+                .Where(brand => !string.IsNullOrWhiteSpace(brand))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                // StartsWith önce, Contains sonra
+                .OrderByDescending(brand => brand.ToLower().StartsWith(q))
+                .Take(3)
                 .ToList();
 
             foreach (var brand in matchedBrands)
@@ -51,8 +59,8 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
             // 2. CATEGORY MATCHES (Kategori)
             var matchedCategories = await _categoryReadRepository.GetAll(false)
                 .Where(c => c.Name.ToLower().Contains(q))
-                .Select(c => new { c.Id, c.Name, c.ParentCategoryId })
-                .Take(5)
+                .Select(c => new { c.Id, c.Name })
+                .Take(3)
                 .ToListAsync(cancellationToken);
 
             foreach (var cat in matchedCategories)
@@ -65,7 +73,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
                 });
             }
 
-            // 4. PRODUCT MATCHES (Ürün)
+            // 3. PRODUCT MATCHES (Ürün)
             var matchedProducts = await _productReadRepository.GetAll(false)
                 .Where(p => p.Name.ToLower().Contains(q))
                 .Select(p => new { p.Id, p.Name })
@@ -82,7 +90,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
                 });
             }
 
-            // Deduplicate by Text and prioritize exact matches or certain types
+            // Deduplicate + limit
             return results
                 .GroupBy(r => r.Text.ToLower())
                 .Select(g => g.First())

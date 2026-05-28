@@ -59,7 +59,13 @@ namespace ECommerce.Infrastructure.Services.Storage.Local
             List<(string fileName, string path)> datas = new();
             foreach (IFormFile file in files)
             {
-                string baseName = productName != null ? $"{productName}{Path.GetExtension(file.FileName)}" : file.FileName;
+                string baseName = file.FileName;
+                if (productName != null)
+                {
+                    string randomId = Guid.NewGuid().ToString("N").Substring(0, 6);
+                    string ext = Path.GetExtension(file.FileName);
+                    baseName = $"{productName}-{randomId}{ext}";
+                }
                 string fileNewName = await FileRenameAsync(path, baseName, HasFile);
 
                 await CopyFileAsync($"{uploadPath}\\{fileNewName}", file);

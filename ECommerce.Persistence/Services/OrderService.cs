@@ -16,6 +16,8 @@ namespace ECommerce.Persistence.Services
 {
     public class OrderService : IOrderService
     {
+        const decimal IyzipayMaxPaymentAmount = 100000m;
+
         readonly IOrderWriteRepository _orderWriteRepository;
         readonly IOrderReadRepository _orderReadRepository;
         readonly ICompletedOrderWriteRepository _completedOrderWriteRepository;
@@ -25,6 +27,7 @@ namespace ECommerce.Persistence.Services
         readonly IPaymentService _paymentService;
         readonly IMailService _mailService;
         readonly IBasketReadRepository _basketReadRepository;
+        readonly IProductWriteRepository _productWriteRepository;
         readonly UserManager<AppUser> _userManager;
         readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -38,6 +41,7 @@ namespace ECommerce.Persistence.Services
             IPaymentService paymentService,
             IMailService mailService,
             IBasketReadRepository basketReadRepository,
+            IProductWriteRepository productWriteRepository,
             UserManager<AppUser> userManager,
             IHttpContextAccessor httpContextAccessor)
         {
@@ -50,11 +54,12 @@ namespace ECommerce.Persistence.Services
             _paymentService = paymentService;
             _mailService = mailService;
             _basketReadRepository = basketReadRepository;
+            _productWriteRepository = productWriteRepository;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task CreateOrderAsync(CreateOrder createOrder)
+        public async Task<(bool succeeded, string errorMessage)> CreateOrderAsync(CreateOrder createOrder)
         {
             var orderCode = (new Random().NextDouble() * 10000).ToString();
             orderCode = orderCode.Substring(orderCode.IndexOf(".") + 1, orderCode.Length - orderCode.IndexOf(".") - 1);
@@ -63,7 +68,7 @@ namespace ECommerce.Persistence.Services
             if (basket == null)
             {
                 _logger.LogWarning("CreateOrderAsync failed because no active basket was found.");
-                throw new InvalidOperationException("Aktif sepet bulunamadi.");
+                return (false, "Aktif sepet bulunamadı.");
             }
 
             // Load complete basket details including products
@@ -73,20 +78,24 @@ namespace ECommerce.Persistence.Services
                 .FirstOrDefaultAsync(b => b.Id == basket.Id);
 
             if (completeBasket == null || completeBasket.BasketItems == null || !completeBasket.BasketItems.Any())
-            {
-                throw new InvalidOperationException("Sepetinizde ürün bulunamadı.");
-            }
+                return (false, "Sepetinizde ürün bulunamadı.");
 
             var username = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
             if (string.IsNullOrEmpty(username))
-                throw new InvalidOperationException("Kullanıcı oturum açmamış.");
+                return (false, "Kullanıcı oturum açmamış.");
 
             var user = await _userManager.FindByNameAsync(username);
             if (user == null)
-                throw new InvalidOperationException("Kullanıcı bulunamadı.");
+                return (false, "Kullanıcı bulunamadı.");
 
             // Calculate total price of basket items
             decimal totalPrice = (decimal)completeBasket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity);
+
+            if (totalPrice > IyzipayMaxPaymentAmount)
+            {
+                _logger.LogWarning("CreateOrderAsync blocked because order total {TotalPrice} exceeds Iyzipay max amount {MaxAmount}.", totalPrice, IyzipayMaxPaymentAmount);
+                return (false, "Iyzico 100.000 TL uzeri odemeleri kabul etmez. Lutfen sepet tutarini 100.000 TL veya altina dusurun.");
+            }
 
             _logger.LogInformation("Processing payment on Iyzipay for order {OrderCode}. Total: {TotalPrice}", orderCode, totalPrice);
 
@@ -102,7 +111,7 @@ namespace ECommerce.Persistence.Services
             if (!paymentSucceeded)
             {
                 _logger.LogWarning("CreateOrderAsync: Payment failed for order {OrderCode}: {Message}", orderCode, paymentMessage);
-                throw new Exception($"Ödeme başarısız: {paymentMessage}");
+                return (false, $"Ödeme başarısız: {paymentMessage}");
             }
 
             _logger.LogInformation("Payment successful for order {OrderCode}. PaymentId: {PaymentId}", orderCode, paymentId);
@@ -122,13 +131,20 @@ namespace ECommerce.Persistence.Services
                 Id = basket.Id,
                 Description = createOrder.Description,
                 OrderCode = orderCode,
-                Status = 1 // Completed - Ödeme tamamlandı
+                Status = 1 // Ödeme tamamlandı
             });
             await _orderWriteRepository.SaveAsync();
 
+            // Decrement stock for each ordered product
+            foreach (var basketItem in completeBasket.BasketItems)
+            {
+                if (basketItem.Product != null)
+                    basketItem.Product.Stock = Math.Max(0, basketItem.Product.Stock - basketItem.Quantity);
+            }
+            await _productWriteRepository.SaveAsync();
+
             _logger.LogInformation("Order {OrderCode} saved successfully. Sending email notification...", orderCode);
 
-            // Send order confirmation email
             try
             {
                 await _mailService.SendMailAsync(
@@ -141,6 +157,8 @@ namespace ECommerce.Persistence.Services
             {
                 _logger.LogError(ex, "Failed to send order placed email for order {OrderCode}", orderCode);
             }
+
+            return (true, string.Empty);
         }
 
         public async Task<ListOrder> GetAllOrdersAsync(int page, int size)
@@ -178,6 +196,13 @@ namespace ECommerce.Persistence.Services
                     CreatedDate = o.CreatedDate,
                     OrderCode = o.OrderCode,
                     TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    OrderItems = o.Basket.BasketItems.Select(bi => new
+                    {
+                        ProductName = bi.Product.Name,
+                        UnitPrice = bi.Product.Price,
+                        Quantity = bi.Quantity,
+                        TotalPrice = bi.Product.Price * bi.Quantity
+                    }),
                     UserName = o.Basket.User.UserName,
                     o.Completed,
                     o.Status,
@@ -195,7 +220,7 @@ namespace ECommerce.Persistence.Services
                 .Include(o => o.Basket)
                     .ThenInclude(b => b.BasketItems)
                         .ThenInclude(bi => bi.Product)
-                .Where(o => o.Basket.User.Id == userId);
+                .Where(o => o.Basket.UserId == userId);
 
             var totalCount = await query.CountAsync();
             var data = query.OrderByDescending(o => o.CreatedDate).Skip(page * size).Take(size);
@@ -225,6 +250,13 @@ namespace ECommerce.Persistence.Services
                     CreatedDate = o.CreatedDate,
                     OrderCode = o.OrderCode,
                     TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    OrderItems = o.Basket.BasketItems.Select(bi => new
+                    {
+                        ProductName = bi.Product.Name,
+                        UnitPrice = bi.Product.Price,
+                        Quantity = bi.Quantity,
+                        TotalPrice = bi.Product.Price * bi.Quantity
+                    }).ToList(),
                     UserName = o.Basket.User.UserName,
                     o.Completed,
                     o.Status,
@@ -328,20 +360,34 @@ namespace ECommerce.Persistence.Services
             return true;
         }
 
-        public async Task<bool> ShipOrderAsync(string orderId, string cargoCompany, string trackingNumber)
+        public async Task<(bool succeeded, CompletedOrderDTO? orderInfo)> ShipOrderAsync(string orderId, string cargoCompany, string trackingNumber)
         {
-            Order? order = await _orderReadRepository.GetByIdAsync(orderId);
+            Guid parsedOrderId = Guid.Parse(orderId);
+            Order? order = await _orderReadRepository.Table
+                .Include(o => o.Basket)
+                .ThenInclude(b => b.User)
+                .FirstOrDefaultAsync(o => o.Id == parsedOrderId);
+
             if (order == null)
-                return false;
+                return (false, null);
 
             order.Status = 4; // Shipped
             order.CargoCompany = cargoCompany;
             order.TrackingNumber = trackingNumber;
             _orderWriteRepository.Update(order);
-            await _orderWriteRepository.SaveAsync();
+            bool succeeded = await _orderWriteRepository.SaveAsync() > 0;
 
             _logger.LogInformation("Order {OrderId} shipped via {CargoCompany}, tracking: {TrackingNumber}", orderId, cargoCompany, trackingNumber);
-            return true;
+
+            CompletedOrderDTO orderInfo = new()
+            {
+                OrderCode = order.OrderCode,
+                OrderDate = order.CreatedDate,
+                Username = order.Basket?.User?.UserName ?? "Değerli Müşterimiz",
+                EMail = order.Basket?.User?.Email ?? string.Empty
+            };
+
+            return (succeeded, orderInfo);
         }
     }
 }

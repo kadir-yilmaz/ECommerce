@@ -19,9 +19,11 @@ namespace ECommerce.Application.Features.Commands.ProductImageFile.UploadProduct
 
         public async Task<UploadProductImageCommandResponse> Handle(UploadProductImageCommandRequest request, CancellationToken cancellationToken)
         {
-            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("photo-images", request.Files);
-
             Domain.Entities.Product product = await _productReadRepository.GetByIdAsync(request.Id);
+            if (product == null)
+                throw new System.Collections.Generic.KeyNotFoundException("Product not found");
+
+            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("product-images", request.Files, product.Name);
 
             await _productImageFileWriteRepository.AddRangeAsync(result.Select(r => new Domain.Entities.ProductImageFile
             {

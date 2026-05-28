@@ -8,6 +8,7 @@
 
 # Configuration files with secrets (keep local only)
 ECommerce.WebAPI/appsettings.json
+ECommerce.WebAPI/appsettings.Development.json
 ECommerce.WebAPI/Properties/PublishProfiles/
 *.pubxml
 *.pubxml.user

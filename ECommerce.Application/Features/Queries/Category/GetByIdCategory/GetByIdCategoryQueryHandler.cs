@@ -17,6 +17,9 @@ namespace ECommerce.Application.Features.Queries.Category.GetByIdCategory
         public async Task<GetByIdCategoryQueryResponse> Handle(GetByIdCategoryQueryRequest request, CancellationToken cancellationToken)
         {
             var category = await _categoryReadRepository.GetByIdAsync(request.Id);
+            if (category == null)
+                throw new System.Collections.Generic.KeyNotFoundException("Category not found");
+
             return new GetByIdCategoryQueryResponse
             {
                 Id = category.Id.ToString(),

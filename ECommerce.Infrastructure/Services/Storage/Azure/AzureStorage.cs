@@ -47,7 +47,13 @@ namespace ECommerce.Infrastructure.Services.Storage.Azure
             List<(string fileName, string pathOrContainerName)> datas = new();
             foreach (IFormFile file in files)
             {
-                string baseName = productName != null ? $"{productName}{Path.GetExtension(file.FileName)}" : file.FileName;
+                string baseName = file.FileName;
+                if (productName != null)
+                {
+                    string randomId = Guid.NewGuid().ToString("N").Substring(0, 6);
+                    string ext = Path.GetExtension(file.FileName);
+                    baseName = $"{productName}-{randomId}{ext}";
+                }
                 string fileNewName = await FileRenameAsync(containerName, baseName, HasFile);
 
                 BlobClient blobClient = _blobContainerClient.GetBlobClient(fileNewName);

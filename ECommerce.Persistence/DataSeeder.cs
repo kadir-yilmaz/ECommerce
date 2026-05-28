@@ -116,8 +116,16 @@ namespace ECommerce.Persistence
             Console.WriteLine("[Seed Data] Ürünler başarıyla tohumlandı.");
         }
 
-        public static async Task SeedRolesAndUsersAsync(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, ECommerceDbContext context)
+        public static async Task SeedRolesAndUsersAsync(
+            UserManager<AppUser> userManager,
+            RoleManager<AppRole> roleManager,
+            ECommerceDbContext context,
+            string adminEmail,
+            string adminPassword)
         {
+            const string legacyAdminEmail = "admin@gmail.com";
+            adminEmail = string.IsNullOrWhiteSpace(adminEmail) ? legacyAdminEmail : adminEmail.Trim();
+            adminPassword = string.IsNullOrWhiteSpace(adminPassword) ? "Admin+1234" : adminPassword;
             // Create Admin role if it doesn't exist
             if (!await roleManager.RoleExistsAsync("Admin"))
             {
@@ -154,19 +162,36 @@ namespace ECommerce.Persistence
                 }
             }
 
-            // Find or create admin user
-            var adminUser = await userManager.FindByEmailAsync("admin@gmail.com");
+            // Find or create configured admin user
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            var legacyAdminUser = string.Equals(adminEmail, legacyAdminEmail, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : await userManager.FindByEmailAsync(legacyAdminEmail);
+
+            if (adminUser == null && legacyAdminUser != null)
+            {
+                adminUser = legacyAdminUser;
+                adminUser.EmailConfirmed = true;
+                adminUser.NameSurname = "Kadir Yilmaz";
+
+                await userManager.SetEmailAsync(adminUser, adminEmail);
+                await userManager.SetUserNameAsync(adminUser, adminEmail);
+                adminUser.PasswordHash = userManager.PasswordHasher.HashPassword(adminUser, adminPassword);
+                await userManager.UpdateAsync(adminUser);
+
+                Console.WriteLine($"[Seed Data] Legacy admin kullanicisi '{legacyAdminEmail}' -> '{adminEmail}' olarak guncellendi ve sifresi guncellendi.");
+            }
             if (adminUser == null)
             {
                 adminUser = new AppUser
                 {
                     Id = Guid.NewGuid().ToString(),
-                    UserName = "admin@gmail.com",
-                    Email = "admin@gmail.com",
-                    NameSurname = "Admin User",
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    NameSurname = "Kadir Yilmaz",
                     EmailConfirmed = true
                 };
-                var result = await userManager.CreateAsync(adminUser, "Admin+1234");
+                var result = await userManager.CreateAsync(adminUser, adminPassword);
                 if (result.Succeeded)
                 {
                     Console.WriteLine("[Seed Data] Admin kullanıcısı oluşturuldu.");

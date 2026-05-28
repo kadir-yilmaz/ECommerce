@@ -15,6 +15,9 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
         public async Task<GetByIdProductQueryResponse> Handle(GetByIdProductQueryRequest request, CancellationToken cancellationToken)
         {
             P.Product product = await _productReadRepository.GetByIdAsync(request.Id, false);
+            if (product == null)
+                throw new System.Collections.Generic.KeyNotFoundException("Product not found");
+
             return new()
             {
                 Id = product.Id.ToString(),

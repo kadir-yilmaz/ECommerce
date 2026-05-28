@@ -19,6 +19,9 @@ namespace ECommerce.Application.Features.Commands.Category.UpdateCategory
         public async Task<UpdateCategoryCommandResponse> Handle(UpdateCategoryCommandRequest request, CancellationToken cancellationToken)
         {
             Domain.Entities.Category category = await _categoryReadRepository.GetByIdAsync(request.Id);
+            if (category == null)
+                throw new System.Collections.Generic.KeyNotFoundException("Category not found");
+
             category.Name = request.Name;
             category.ParentCategoryId = request.ParentCategoryId;
             await _categoryWriteRepository.SaveAsync();

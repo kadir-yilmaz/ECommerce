@@ -60,6 +60,8 @@ namespace ECommerce.WebAPI.Controllers
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderCommandRequest createOrderCommandRequest)
         {
             CreateOrderCommandResponse response = await _mediator.Send(createOrderCommandRequest);
+            if (!response.Succeeded)
+                return BadRequest(new { message = response.Message });
             return Ok(response);
         }
 

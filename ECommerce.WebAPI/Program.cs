@@ -150,9 +150,12 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
+    var adminEmail = app.Configuration["AdminUser:Email"];
+    var adminPassword = app.Configuration["AdminUser:Password"];
+
     await DataSeeder.SeedCategoriesAsync(context);
     await DataSeeder.SeedProductsAsync(context);
-    await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context);
+    await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context, adminEmail, adminPassword);
 }
 
 app.Run();

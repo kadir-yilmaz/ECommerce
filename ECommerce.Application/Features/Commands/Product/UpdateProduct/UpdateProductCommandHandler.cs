@@ -20,6 +20,9 @@ namespace ECommerce.Application.Features.Commands.Product.UpdateProduct
         public async Task<UpdateProductCommandResponse> Handle(UpdateProductCommandRequest request, CancellationToken cancellationToken)
         {
             Domain.Entities.Product product = await _productReadRepository.GetByIdAsync(request.Id);
+            if (product == null)
+                throw new System.Collections.Generic.KeyNotFoundException("Product not found");
+
             product.Stock = request.Stock;
             product.Price = request.Price;
             product.Name = request.Name;

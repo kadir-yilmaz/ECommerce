@@ -18,7 +18,12 @@ namespace ECommerce.Persistence
 
                 configurationManager.SetBasePath(basePath);
                 configurationManager.AddJsonFile("appsettings.json", optional: true);
-                configurationManager.AddJsonFile("appsettings.Production.json", optional: true);
+
+                string environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+                if (!string.IsNullOrEmpty(environmentName))
+                {
+                    configurationManager.AddJsonFile($"appsettings.{environmentName}.json", optional: true);
+                }
 
                 return configurationManager.GetConnectionString("sqlConnection");
             }

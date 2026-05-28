@@ -66,9 +66,16 @@ namespace ECommerce.Infrastructure.Services
 
         public async Task SendCompletedOrderMailAsync(string to, string orderCode, DateTime orderDate, string userName)
         {
-            string mail = $"Sayin {userName}, merhaba.<br>{orderDate:G} tarihinde vermis oldugunuz {orderCode} kodlu siparisiniz tamamlanmis ve kargo firmasina verilmis bulunmaktadir.<br>Keyifli kullanmanizi dileriz.";
+            string mail = $"Sayin {userName}, merhaba.<br>{orderDate:G} tarihinde vermis oldugunuz {orderCode} kodlu siparisiniz tamamlanmis bulunmaktadir.<br>Keyifli kullanmanizi dileriz.";
 
             await SendMailAsync(to, $"{orderCode} numarali siparisiniz tamamlandi", mail);
+        }
+
+        public async Task SendShippedOrderMailAsync(string to, string orderCode, DateTime orderDate, string userName, string cargoCompany, string trackingNumber)
+        {
+            string mail = $"Sayın {userName}, merhaba.<br>{orderDate:G} tarihinde vermiş olduğunuz {orderCode} kodlu siparişiniz kargoya verilmiştir.<br><br><b>Kargo Firması:</b> {cargoCompany}<br><b>Kargo Takip No:</b> {trackingNumber}<br><br>Keyifli kullanmanızı dileriz.";
+
+            await SendMailAsync(to, $"{orderCode} numaralı siparişiniz kargoya verildi", mail);
         }
 
         public async Task SendEmailConfirmationMailAsync(string to, string userId, string token)

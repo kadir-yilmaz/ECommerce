@@ -35,7 +35,7 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
                 request.District,
                 cardLast4);
 
-            await _orderService.CreateOrderAsync(new()
+            var (succeeded, errorMessage) = await _orderService.CreateOrderAsync(new()
             {
                 BasketId = request.BasketId,
                 Description = request.Description,
@@ -53,9 +53,15 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
                 Cvv = request.Cvv
             });
 
+            if (!succeeded)
+            {
+                _logger.LogWarning("CreateOrder failed: {ErrorMessage}", errorMessage);
+                return new() { Succeeded = false, Message = errorMessage };
+            }
+
             await _orderHubService.OrderAddedMessageAsync("Heyy, yeni bir sipariş geldi! :) ");
 
-            return new();
+            return new() { Succeeded = true, Message = "Siparişiniz başarıyla oluşturuldu." };
         }
     }
 }
