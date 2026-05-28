@@ -4,6 +4,8 @@ using ECommerce.Application.Enums;
 using ECommerce.Application.Features.Commands.Order.CompleteOrder;
 using ECommerce.Application.Features.Commands.Order.CreateOrder;
 using ECommerce.Application.Features.Commands.Order.RemoveOrder;
+using ECommerce.Application.Features.Commands.Order.ShipOrder;
+using ECommerce.Application.Features.Commands.Order.UpdateOrderStatus;
 using ECommerce.Application.Features.Queries.Order.GetAllOrders;
 using ECommerce.Application.Features.Queries.Order.GetOrderById;
 using ECommerce.Application.Features.Queries.Order.GetOrdersByUser;
@@ -76,6 +78,25 @@ namespace ECommerce.WebAPI.Controllers
         public async Task<IActionResult> CompleteOrder([FromRoute] CompleteOrderCommandRequest completeOrderCommandRequest)
         {
             CompleteOrderCommandResponse response = await _mediator.Send(completeOrderCommandRequest);
+            return Ok(response);
+        }
+
+        [HttpPut("{Id}/status/{Status}")]
+        [Authorize(AuthenticationSchemes = "Admin")]
+        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Orders, ActionType = ActionType.Updating, Definition = "Update Order Status")]
+        public async Task<IActionResult> UpdateOrderStatus([FromRoute] UpdateOrderStatusCommandRequest updateOrderStatusCommandRequest)
+        {
+            UpdateOrderStatusCommandResponse response = await _mediator.Send(updateOrderStatusCommandRequest);
+            return Ok(response);
+        }
+
+        [HttpPut("{Id}/ship")]
+        [Authorize(AuthenticationSchemes = "Admin")]
+        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Orders, ActionType = ActionType.Updating, Definition = "Ship Order")]
+        public async Task<IActionResult> ShipOrder([FromRoute] string Id, [FromBody] ShipOrderCommandRequest shipOrderCommandRequest)
+        {
+            shipOrderCommandRequest.Id = Id;
+            ShipOrderCommandResponse response = await _mediator.Send(shipOrderCommandRequest);
             return Ok(response);
         }
     }

@@ -14,6 +14,21 @@ namespace ECommerce.Domain.Entities
 
         public string OrderCode { get; set; }
 
+        /// <summary>
+        /// 0=Pending, 1=Completed, 2=Failed, 3=Processing, 4=Shipped, 5=Delivered
+        /// </summary>
+        public int Status { get; set; }
+
+        /// <summary>
+        /// Kargo şirketi adı (Yurtiçi Kargo, Aras Kargo vb.)
+        /// </summary>
+        public string? CargoCompany { get; set; }
+
+        /// <summary>
+        /// Kargo takip numarası
+        /// </summary>
+        public string? TrackingNumber { get; set; }
+
         public Basket Basket { get; set; }
         //public ICollection<Product> Products { get; set; }
         //public Customer Customer { get; set; }

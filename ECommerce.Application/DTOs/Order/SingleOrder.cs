@@ -9,5 +9,8 @@ namespace ECommerce.Application.DTOs.Order
         public string Id { get; set; }
         public string OrderCode { get; set; }
         public bool Completed { get; set; }
+        public int Status { get; set; }
+        public string? CargoCompany { get; set; }
+        public string? TrackingNumber { get; set; }
     }
 }

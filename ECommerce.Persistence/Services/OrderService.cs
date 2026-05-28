@@ -121,7 +121,8 @@ namespace ECommerce.Persistence.Services
                 Address = address,
                 Id = basket.Id,
                 Description = createOrder.Description,
-                OrderCode = orderCode
+                OrderCode = orderCode,
+                Status = 1 // Completed - Ödeme tamamlandı
             });
             await _orderWriteRepository.SaveAsync();
 
@@ -162,7 +163,10 @@ namespace ECommerce.Persistence.Services
                             CreatedDate = order.CreatedDate,
                             OrderCode = order.OrderCode,
                             Basket = order.Basket,
-                            Completed = _co != null ? true : false
+                            Completed = _co != null ? true : false,
+                            Status = order.Status,
+                            CargoCompany = order.CargoCompany,
+                            TrackingNumber = order.TrackingNumber
                         };
 
             return new()
@@ -175,7 +179,10 @@ namespace ECommerce.Persistence.Services
                     OrderCode = o.OrderCode,
                     TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
                     UserName = o.Basket.User.UserName,
-                    o.Completed
+                    o.Completed,
+                    o.Status,
+                    o.CargoCompany,
+                    o.TrackingNumber
                 }).ToListAsync()
             };
         }
@@ -203,7 +210,10 @@ namespace ECommerce.Persistence.Services
                             CreatedDate = order.CreatedDate,
                             OrderCode = order.OrderCode,
                             Basket = order.Basket,
-                            Completed = _co != null ? true : false
+                            Completed = _co != null ? true : false,
+                            Status = order.Status,
+                            CargoCompany = order.CargoCompany,
+                            TrackingNumber = order.TrackingNumber
                         };
 
             return new()
@@ -216,7 +226,10 @@ namespace ECommerce.Persistence.Services
                     OrderCode = o.OrderCode,
                     TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
                     UserName = o.Basket.User.UserName,
-                    o.Completed
+                    o.Completed,
+                    o.Status,
+                    o.CargoCompany,
+                    o.TrackingNumber
                 }).ToListAsync()
             };
         }
@@ -240,7 +253,10 @@ namespace ECommerce.Persistence.Services
                                    Basket = order.Basket,
                                    Completed = _co != null ? true : false,
                                    Address = order.Address,
-                                   Description = order.Description
+                                   Description = order.Description,
+                                   Status = order.Status,
+                                   CargoCompany = order.CargoCompany,
+                                   TrackingNumber = order.TrackingNumber
                                }).FirstOrDefaultAsync(o => o.Id == Guid.Parse(id));
 
             return new()
@@ -256,7 +272,10 @@ namespace ECommerce.Persistence.Services
                 CreatedDate = data2.CreatedDate,
                 Description = data2.Description,
                 OrderCode = data2.OrderCode,
-                Completed = data2.Completed
+                Completed = data2.Completed,
+                Status = data2.Status,
+                CargoCompany = data2.CargoCompany,
+                TrackingNumber = data2.TrackingNumber
             };
         }
 
@@ -291,6 +310,36 @@ namespace ECommerce.Persistence.Services
                 return true;
             }
             return false;
+        }
+
+        public async Task<bool> UpdateOrderStatusAsync(string orderId, int status)
+        {
+            Order? order = await _orderReadRepository.GetByIdAsync(orderId);
+            if (order == null)
+                return false;
+
+            order.Status = status;
+            _orderWriteRepository.Update(order);
+            await _orderWriteRepository.SaveAsync();
+
+            _logger.LogInformation("Order {OrderId} status updated to {Status}", orderId, status);
+            return true;
+        }
+
+        public async Task<bool> ShipOrderAsync(string orderId, string cargoCompany, string trackingNumber)
+        {
+            Order? order = await _orderReadRepository.GetByIdAsync(orderId);
+            if (order == null)
+                return false;
+
+            order.Status = 4; // Shipped
+            order.CargoCompany = cargoCompany;
+            order.TrackingNumber = trackingNumber;
+            _orderWriteRepository.Update(order);
+            await _orderWriteRepository.SaveAsync();
+
+            _logger.LogInformation("Order {OrderId} shipped via {CargoCompany}, tracking: {TrackingNumber}", orderId, cargoCompany, trackingNumber);
+            return true;
         }
     }
 }
