@@ -7,26 +7,113 @@ namespace ECommerce.Persistence
 {
     public static class DataSeeder
     {
+        public static async Task SeedCategoriesAsync(ECommerceDbContext context)
+        {
+            if (context.Categories.Any()) return;
+
+            // 1. Ana Kategoriler
+            var elektronik = new Category { Id = Guid.NewGuid(), Name = "Elektronik" };
+            var kozmetik = new Category { Id = Guid.NewGuid(), Name = "Kozmetik" };
+            var ayakkabi = new Category { Id = Guid.NewGuid(), Name = "Ayakkabı" };
+            var kadin = new Category { Id = Guid.NewGuid(), Name = "Kadın" };
+            var erkek = new Category { Id = Guid.NewGuid(), Name = "Erkek" };
+            var superMarket = new Category { Id = Guid.NewGuid(), Name = "Süpermarket" };
+            var sporOutdoor = new Category { Id = Guid.NewGuid(), Name = "Spor & Outdoor" };
+
+            // 2. Elektronik Alt Kategorileri
+            var telefon = new Category { Id = Guid.NewGuid(), Name = "Telefon", ParentCategoryId = elektronik.Id };
+            var laptop = new Category { Id = Guid.NewGuid(), Name = "Laptop", ParentCategoryId = elektronik.Id };
+            var kulaklik = new Category { Id = Guid.NewGuid(), Name = "Kulaklık", ParentCategoryId = elektronik.Id };
+            var mouse = new Category { Id = Guid.NewGuid(), Name = "Mouse", ParentCategoryId = elektronik.Id };
+            var klavye = new Category { Id = Guid.NewGuid(), Name = "Klavye", ParentCategoryId = elektronik.Id };
+
+            // 3. Kozmetik Alt Kategorileri
+            var parfum = new Category { Id = Guid.NewGuid(), Name = "Parfüm", ParentCategoryId = kozmetik.Id };
+            var ruj = new Category { Id = Guid.NewGuid(), Name = "Ruj", ParentCategoryId = kozmetik.Id };
+            var ciltBakim = new Category { Id = Guid.NewGuid(), Name = "Cilt Bakım", ParentCategoryId = kozmetik.Id };
+
+            // 4. Ayakkabı Alt Kategorileri
+            var spor = new Category { Id = Guid.NewGuid(), Name = "Spor", ParentCategoryId = ayakkabi.Id };
+            var gundelik = new Category { Id = Guid.NewGuid(), Name = "Gündelik", ParentCategoryId = ayakkabi.Id };
+            var topuklu = new Category { Id = Guid.NewGuid(), Name = "Topuklu Ayakkabı", ParentCategoryId = ayakkabi.Id };
+
+            // 5. Kadın Alt Kategorileri
+            var kadinGiyim = new Category { Id = Guid.NewGuid(), Name = "Giyim", ParentCategoryId = kadin.Id };
+            var kadinCanta = new Category { Id = Guid.NewGuid(), Name = "Aksesuar & Çanta", ParentCategoryId = kadin.Id };
+
+            // 6. Erkek Alt Kategorileri
+            var erkekGiyim = new Category { Id = Guid.NewGuid(), Name = "Giyim", ParentCategoryId = erkek.Id };
+            var erkekSaat = new Category { Id = Guid.NewGuid(), Name = "Saat & Aksesuar", ParentCategoryId = erkek.Id };
+
+            var categories = new List<Category>
+            {
+                elektronik, kozmetik, ayakkabi, kadin, erkek, superMarket, sporOutdoor,
+                telefon, laptop, kulaklik, mouse, klavye,
+                parfum, ruj, ciltBakim,
+                spor, gundelik, topuklu,
+                kadinGiyim, kadinCanta,
+                erkekGiyim, erkekSaat
+            };
+
+            await context.Categories.AddRangeAsync(categories);
+            await context.SaveChangesAsync();
+            Console.WriteLine("[Seed Data] Kategoriler başarıyla tohumlandı.");
+        }
+
         public static async Task SeedProductsAsync(ECommerceDbContext context)
         {
-            if (context.Products.Any()) return;
+            var telefonCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Telefon");
+            var laptopCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Laptop");
+            var kulaklikCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Kulaklık");
+            var mouseCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Mouse");
+            var klavyeCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Klavye");
+            var parfumCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Parfüm");
+            var sporCat = await context.Categories.FirstOrDefaultAsync(c => c.Name == "Spor");
+
+            if (context.Products.Any())
+            {
+                // Var olan ürünlerin CategoryId'si boşsa eşleştir
+                var existingProducts = await context.Products.Where(p => p.CategoryId == null).ToListAsync();
+                if (existingProducts.Any())
+                {
+                    foreach (var p in existingProducts)
+                    {
+                        if (p.Name.Contains("iPhone") || p.Name.Contains("Galaxy"))
+                            p.CategoryId = telefonCat?.Id;
+                        else if (p.Name.Contains("MacBook") || p.Name.Contains("Dell") || p.Name.Contains("XPS"))
+                            p.CategoryId = laptopCat?.Id;
+                        else if (p.Name.Contains("Sony") || p.Name.Contains("WH-"))
+                            p.CategoryId = kulaklikCat?.Id;
+                        else if (p.Name.Contains("Logitech") || p.Name.Contains("MX"))
+                            p.CategoryId = mouseCat?.Id;
+                        else if (p.Name.Contains("Corsair") || p.Name.Contains("K100"))
+                            p.CategoryId = klavyeCat?.Id;
+                    }
+                    await context.SaveChangesAsync();
+                    Console.WriteLine("[Seed Data] Mevcut ürünler ilgili kategorilerle eşleştirildi.");
+                }
+                return;
+            }
 
             var products = new List<Product>
             {
-                new() { Id = Guid.NewGuid(), Name = "iPhone 15 Pro", Stock = 50, Price = 59999 },
-                new() { Id = Guid.NewGuid(), Name = "Samsung Galaxy S24", Stock = 75, Price = 44999 },
-                new() { Id = Guid.NewGuid(), Name = "MacBook Air M3", Stock = 30, Price = 49999 },
-                new() { Id = Guid.NewGuid(), Name = "Sony WH-1000XM5", Stock = 100, Price = 9999 },
-                new() { Id = Guid.NewGuid(), Name = "iPad Pro 12.9", Stock = 40, Price = 39999 },
-                new() { Id = Guid.NewGuid(), Name = "Apple Watch Ultra 2", Stock = 60, Price = 27999 },
-                new() { Id = Guid.NewGuid(), Name = "Dell XPS 15", Stock = 25, Price = 42999 },
-                new() { Id = Guid.NewGuid(), Name = "Logitech MX Master 3S", Stock = 150, Price = 2999 },
-                new() { Id = Guid.NewGuid(), Name = "Samsung 4K Monitor 32\"", Stock = 35, Price = 12999 },
-                new() { Id = Guid.NewGuid(), Name = "Corsair K100 Keyboard", Stock = 80, Price = 6999 }
+                new() { Id = Guid.NewGuid(), Name = "iPhone 15 Pro", Stock = 50, Price = 59999, CategoryId = telefonCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Samsung Galaxy S24", Stock = 75, Price = 44999, CategoryId = telefonCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "MacBook Air M3", Stock = 30, Price = 49999, CategoryId = laptopCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Sony WH-1000XM5", Stock = 100, Price = 9999, CategoryId = kulaklikCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Logitech MX Master 3S", Stock = 150, Price = 2999, CategoryId = mouseCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Corsair K100 Keyboard", Stock = 80, Price = 6999, CategoryId = klavyeCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Dell XPS 15", Stock = 25, Price = 42999, CategoryId = laptopCat?.Id },
+                
+                // Cosmetics & Shoes
+                new() { Id = Guid.NewGuid(), Name = "Chanel Bleu De Chanel EDP 100 ml", Stock = 40, Price = 4500, CategoryId = parfumCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Nike Air Max Pulse Spor Ayakkabı", Stock = 65, Price = 5200, CategoryId = sporCat?.Id },
+                new() { Id = Guid.NewGuid(), Name = "Adidas Ultraboost Light", Stock = 55, Price = 6100, CategoryId = sporCat?.Id }
             };
 
             await context.Products.AddRangeAsync(products);
             await context.SaveChangesAsync();
+            Console.WriteLine("[Seed Data] Ürünler başarıyla tohumlandı.");
         }
 
         public static async Task SeedRolesAndUsersAsync(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, ECommerceDbContext context)

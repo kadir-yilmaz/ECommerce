@@ -42,7 +42,8 @@ namespace ECommerce.Persistence.Repositories
             var query = Table.AsQueryable();
             if (!tracking)
                 query = Table.AsNoTracking();
-            return await query.FirstOrDefaultAsync(data => data.Id == Guid.Parse(id));
+            Guid idGuid = Guid.Parse(id);
+            return await query.FirstOrDefaultAsync(data => data.Id == idGuid);
         }
     }
 }

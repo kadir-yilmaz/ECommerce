@@ -11,6 +11,7 @@ using ECommerce.Application.Features.Commands.ProductImageFile.UploadProductImag
 using ECommerce.Application.Features.Queries.Product.GetAllProduct;
 using ECommerce.Application.Features.Queries.Product.GetByIdProduct;
 using ECommerce.Application.Features.Queries.Product.GetQrCodeToProduct;
+using ECommerce.Application.Features.Queries.Product.GetSearchSuggestions;
 using ECommerce.Application.Features.Queries.ProductImageFile.GetProductImages;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -125,6 +126,14 @@ namespace ECommerce.WebAPI.Controllers
         public async Task<IActionResult> UpdateStockQrCodeToProduct(UpdateStockQrCodeToProductCommandRequest updateStockQrCodeToProductCommandRequest)
         {
             UpdateStockQrCodeToProductCommandResponse response = await _mediator.Send(updateStockQrCodeToProductCommandRequest);
+            return Ok(response);
+        }
+
+        [HttpGet("search-suggestions")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetSearchSuggestions([FromQuery] string q)
+        {
+            var response = await _mediator.Send(new GetSearchSuggestionsQueryRequest { Q = q });
             return Ok(response);
         }
     }

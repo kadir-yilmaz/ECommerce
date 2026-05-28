@@ -20,7 +20,8 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
                 Id = product.Id.ToString(),
                 Name = product.Name,
                 Price = product.Price,
-                Stock = product.Stock
+                Stock = product.Stock,
+                CategoryId = product.CategoryId
             };
         }
     }

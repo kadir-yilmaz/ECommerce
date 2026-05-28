@@ -8,5 +8,6 @@ namespace ECommerce.Application.Features.Commands.Product.UpdateProduct
         public string Name { get; set; }
         public int Stock { get; set; }
         public float Price { get; set; }
+        public Guid? CategoryId { get; set; }
     }
 }

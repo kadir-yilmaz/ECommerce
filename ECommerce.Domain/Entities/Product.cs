@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 
 namespace ECommerce.Domain.Entities
 {
@@ -9,9 +11,13 @@ namespace ECommerce.Domain.Entities
             BasketItems = new HashSet<BasketItem>();
             FavoriteItems = new HashSet<FavoriteItem>();
         }
+        
         public string Name { get; set; }
         public int Stock { get; set; }
         public float Price { get; set; }
+
+        public Guid? CategoryId { get; set; }
+        public Category Category { get; set; }
 
         //public ICollection<Order> Orders { get; set; }
         public ICollection<ProductImageFile> ProductImageFiles { get; set; }

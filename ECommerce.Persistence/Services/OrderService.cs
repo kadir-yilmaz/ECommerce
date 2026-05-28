@@ -236,6 +236,7 @@ namespace ECommerce.Persistence.Services
 
         public async Task<SingleOrder> GetOrderByIdAsync(string id)
         {
+            Guid orderId = Guid.Parse(id);
             var data = _orderReadRepository.Table
                                  .Include(o => o.Basket)
                                      .ThenInclude(b => b.BasketItems)
@@ -257,7 +258,7 @@ namespace ECommerce.Persistence.Services
                                    Status = order.Status,
                                    CargoCompany = order.CargoCompany,
                                    TrackingNumber = order.TrackingNumber
-                               }).FirstOrDefaultAsync(o => o.Id == Guid.Parse(id));
+                               }).FirstOrDefaultAsync(o => o.Id == orderId);
 
             return new()
             {
@@ -281,14 +282,15 @@ namespace ECommerce.Persistence.Services
 
         public async Task<(bool, CompletedOrderDTO)> CompleteOrderAsync(string id)
         {
+            Guid orderId = Guid.Parse(id);
             Order? order = await _orderReadRepository.Table
                 .Include(o => o.Basket)
                 .ThenInclude(b => b.User)
-                .FirstOrDefaultAsync(o => o.Id == Guid.Parse(id));
+                .FirstOrDefaultAsync(o => o.Id == orderId);
 
             if (order != null)
             {
-                await _completedOrderWriteRepository.AddAsync(new() { OrderId = Guid.Parse(id) });
+                await _completedOrderWriteRepository.AddAsync(new() { OrderId = orderId });
                 return (await _completedOrderWriteRepository.SaveAsync() > 0, new()
                 {
                     OrderCode = order.OrderCode,

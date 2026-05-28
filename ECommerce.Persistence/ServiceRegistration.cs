@@ -57,6 +57,9 @@ namespace ECommerce.Persistence
             services.AddScoped<ICampaignImageFileReadRepository, CampaignImageFileReadRepository>();
             services.AddScoped<ICampaignImageFileWriteRepository, CampaignImageFileWriteRepository>();
 
+            services.AddScoped<ECommerce.Application.Repositories.Category.ICategoryReadRepository, ECommerce.Persistence.Repositories.Category.CategoryReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.Category.ICategoryWriteRepository, ECommerce.Persistence.Repositories.Category.CategoryWriteRepository>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IExternalAuthentication, AuthService>();

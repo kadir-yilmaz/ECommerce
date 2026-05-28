@@ -21,8 +21,9 @@ namespace ECommerce.Application.Features.Commands.Product.UpdateProduct
         {
             Domain.Entities.Product product = await _productReadRepository.GetByIdAsync(request.Id);
             product.Stock = request.Stock;
-            product.Name = request.Name;
             product.Price = request.Price;
+            product.Name = request.Name;
+            product.CategoryId = request.CategoryId;
             await _productWriteRepository.SaveAsync();
             _logger.LogInformation("Product güncellendi...");
             return new();
