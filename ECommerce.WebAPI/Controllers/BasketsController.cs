@@ -61,7 +61,7 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpPost("merge")]
-        [Authorize(AuthenticationSchemes = "Admin")]
+        [AllowAnonymous]
         public async Task<IActionResult> MergeGuestBasket([FromBody] MergeGuestBasketCommandRequest request)
         {
             var response = await _mediator.Send(request);

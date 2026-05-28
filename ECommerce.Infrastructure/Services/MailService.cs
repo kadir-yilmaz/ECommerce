@@ -1,5 +1,7 @@
 using ECommerce.Application.Abstractions.Services;
+using ECommerce.Application.Configurations;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
 using System.Text;
@@ -8,10 +10,12 @@ namespace ECommerce.Infrastructure.Services
 {
     public class MailService : IMailService
     {
+        readonly MailSettings _mailSettings;
         readonly IConfiguration _configuration;
 
-        public MailService(IConfiguration configuration)
+        public MailService(IOptions<MailSettings> mailSettings, IConfiguration configuration)
         {
+            _mailSettings = mailSettings.Value;
             _configuration = configuration;
         }
 
@@ -28,8 +32,8 @@ namespace ECommerce.Infrastructure.Services
                 Subject = subject,
                 Body = body,
                 From = new MailAddress(
-                    _configuration["Mail:Username"] ?? string.Empty,
-                    _configuration["Mail:DisplayName"] ?? "E-Commerce",
+                    _mailSettings.SenderEmail ?? string.Empty,
+                    _mailSettings.SenderName ?? "E-Commerce",
                     Encoding.UTF8)
             };
 
@@ -38,10 +42,10 @@ namespace ECommerce.Infrastructure.Services
 
             using SmtpClient smtp = new()
             {
-                Credentials = new NetworkCredential(_configuration["Mail:Username"], _configuration["Mail:Password"]),
-                Port = int.TryParse(_configuration["Mail:Port"], out int port) ? port : 587,
-                EnableSsl = bool.TryParse(_configuration["Mail:EnableSsl"], out bool enableSsl) ? enableSsl : true,
-                Host = _configuration["Mail:Host"] ?? string.Empty
+                Credentials = new NetworkCredential(_mailSettings.SenderEmail, _mailSettings.Password),
+                Port = _mailSettings.SmtpPort != 0 ? _mailSettings.SmtpPort : 587,
+                EnableSsl = true,
+                Host = _mailSettings.SmtpServer ?? "smtp.gmail.com"
             };
 
             await smtp.SendMailAsync(mail);

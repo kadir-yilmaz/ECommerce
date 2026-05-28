@@ -83,14 +83,21 @@ namespace ECommerce.Persistence.Services
                   .Take(size)
                   .ToListAsync();
 
-            return users.Select(user => new ListUser
+            var listUsers = new List<ListUser>();
+            foreach (var user in users)
             {
-                Id = user.Id,
-                Email = user.Email ?? string.Empty,
-                NameSurname = user.NameSurname,
-                TwoFactorEnabled = user.TwoFactorEnabled,
-                UserName = user.UserName ?? string.Empty
-            }).ToList();
+                var userRoles = await _userManager.GetRolesAsync(user);
+                listUsers.Add(new ListUser
+                {
+                    Id = user.Id,
+                    Email = user.Email ?? string.Empty,
+                    NameSurname = user.NameSurname,
+                    TwoFactorEnabled = user.TwoFactorEnabled,
+                    UserName = user.UserName ?? string.Empty,
+                    Roles = userRoles.ToArray()
+                });
+            }
+            return listUsers;
         }
 
         public int TotalUsersCount => _userManager.Users.Count();

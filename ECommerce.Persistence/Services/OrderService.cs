@@ -4,6 +4,8 @@ using ECommerce.Application.Repositories;
 using ECommerce.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +22,24 @@ namespace ECommerce.Persistence.Services
         readonly ICompletedOrderReadRepository _completedOrderReadRepository;
         readonly IBasketService _basketService;
         readonly ILogger<OrderService> _logger;
+        readonly IPaymentService _paymentService;
+        readonly IMailService _mailService;
+        readonly IBasketReadRepository _basketReadRepository;
+        readonly UserManager<AppUser> _userManager;
+        readonly IHttpContextAccessor _httpContextAccessor;
 
-        public OrderService(IOrderWriteRepository orderWriteRepository, IOrderReadRepository orderReadRepository, ICompletedOrderWriteRepository completedOrderWriteRepository, ICompletedOrderReadRepository completedOrderReadRepository, IBasketService basketService, ILogger<OrderService> logger)
+        public OrderService(
+            IOrderWriteRepository orderWriteRepository, 
+            IOrderReadRepository orderReadRepository, 
+            ICompletedOrderWriteRepository completedOrderWriteRepository, 
+            ICompletedOrderReadRepository completedOrderReadRepository, 
+            IBasketService basketService, 
+            ILogger<OrderService> logger,
+            IPaymentService paymentService,
+            IMailService mailService,
+            IBasketReadRepository basketReadRepository,
+            UserManager<AppUser> userManager,
+            IHttpContextAccessor httpContextAccessor)
         {
             _orderWriteRepository = orderWriteRepository;
             _orderReadRepository = orderReadRepository;
@@ -29,6 +47,11 @@ namespace ECommerce.Persistence.Services
             _completedOrderReadRepository = completedOrderReadRepository;
             _basketService = basketService;
             _logger = logger;
+            _paymentService = paymentService;
+            _mailService = mailService;
+            _basketReadRepository = basketReadRepository;
+            _userManager = userManager;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task CreateOrderAsync(CreateOrder createOrder)
@@ -43,6 +66,47 @@ namespace ECommerce.Persistence.Services
                 throw new InvalidOperationException("Aktif sepet bulunamadi.");
             }
 
+            // Load complete basket details including products
+            var completeBasket = await _basketReadRepository.Table
+                .Include(b => b.BasketItems)
+                .ThenInclude(bi => bi.Product)
+                .FirstOrDefaultAsync(b => b.Id == basket.Id);
+
+            if (completeBasket == null || completeBasket.BasketItems == null || !completeBasket.BasketItems.Any())
+            {
+                throw new InvalidOperationException("Sepetinizde ürün bulunamadı.");
+            }
+
+            var username = _httpContextAccessor.HttpContext?.User?.Identity?.Name;
+            if (string.IsNullOrEmpty(username))
+                throw new InvalidOperationException("Kullanıcı oturum açmamış.");
+
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null)
+                throw new InvalidOperationException("Kullanıcı bulunamadı.");
+
+            // Calculate total price of basket items
+            decimal totalPrice = (decimal)completeBasket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity);
+
+            _logger.LogInformation("Processing payment on Iyzipay for order {OrderCode}. Total: {TotalPrice}", orderCode, totalPrice);
+
+            // Call Iyzipay to process payment
+            var (paymentSucceeded, paymentMessage, paymentId) = await _paymentService.ProcessPaymentAsync(
+                createOrder,
+                totalPrice,
+                orderCode,
+                user.Email ?? "test@email.com",
+                user.NameSurname ?? user.UserName ?? "Customer"
+            );
+
+            if (!paymentSucceeded)
+            {
+                _logger.LogWarning("CreateOrderAsync: Payment failed for order {OrderCode}: {Message}", orderCode, paymentMessage);
+                throw new Exception($"Ödeme başarısız: {paymentMessage}");
+            }
+
+            _logger.LogInformation("Payment successful for order {OrderCode}. PaymentId: {PaymentId}", orderCode, paymentId);
+
             var address = string.Join(Environment.NewLine, new[]
             {
                 $"Teslimat Kisisi: {createOrder.ContactName}",
@@ -51,18 +115,6 @@ namespace ECommerce.Persistence.Services
                 $"Posta Kodu: {createOrder.PostalCode}",
                 $"Acik Adres: {createOrder.AddressLine}"
             });
-
-            var cardLast4 = createOrder.CardNumber.Length >= 4
-                ? createOrder.CardNumber[^4..]
-                : createOrder.CardNumber;
-
-            _logger.LogInformation(
-                "Creating order {OrderCode} for basket {BasketId}. Delivery {City}/{District}. Card ending with {CardLast4}.",
-                orderCode,
-                basket.Id,
-                createOrder.City,
-                createOrder.District,
-                cardLast4);
 
             await _orderWriteRepository.AddAsync(new()
             {
@@ -73,7 +125,21 @@ namespace ECommerce.Persistence.Services
             });
             await _orderWriteRepository.SaveAsync();
 
-            _logger.LogInformation("Order {OrderCode} saved successfully.", orderCode);
+            _logger.LogInformation("Order {OrderCode} saved successfully. Sending email notification...", orderCode);
+
+            // Send order confirmation email
+            try
+            {
+                await _mailService.SendMailAsync(
+                    user.Email ?? "test@email.com",
+                    $"{orderCode} Numaralı Siparişiniz Alındı",
+                    $"Sayın {user.NameSurname}, merhaba.<br>{orderCode} kodlu siparişiniz başarıyla alınmıştır. Toplam Tutar: {totalPrice:C2}. Ödemeniz Iyzico güvencesiyle tahsil edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz."
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send order placed email for order {OrderCode}", orderCode);
+            }
         }
 
         public async Task<ListOrder> GetAllOrdersAsync(int page, int size)

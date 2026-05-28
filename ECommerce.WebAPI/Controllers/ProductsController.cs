@@ -84,8 +84,7 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpGet("[action]/{id}")]
-        [Authorize(AuthenticationSchemes = "Admin")]
-        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Products, ActionType = ActionType.Reading, Definition = "Get Product Images")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetProductImages([FromRoute] GetProductImagesQueryRequest getProductImagesQueryRequest)
         {
             List<GetProductImagesQueryResponse> response = await _mediator.Send(getProductImagesQueryRequest);

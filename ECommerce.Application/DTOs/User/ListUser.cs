@@ -7,5 +7,6 @@ namespace ECommerce.Application.DTOs.User
         public string NameSurname { get; set; }
         public string UserName { get; set; }
         public bool TwoFactorEnabled { get; set; }
+        public string[] Roles { get; set; }
     }
 }

@@ -17,6 +17,8 @@ using ECommerce.SignalR.Hubs;
 using ECommerce.WebAPI.Extensions;
 using ECommerce.WebAPI.Filters;
 
+using ECommerce.Application.Configurations;
+
 DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("serilog.json", optional: false, reloadOnChange: true);
@@ -31,6 +33,8 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache();
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
+builder.Services.Configure<IyzipaySettings>(builder.Configuration.GetSection("Iyzipay"));
 builder.Services.AddPersistenceServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
@@ -54,7 +58,10 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
     policy.SetIsOriginAllowed(origin => 
     {
         var host = new Uri(origin).Host;
-        return host == "localhost" || host.EndsWith(".trycloudflare.com");
+        return host == "localhost"
+            || host == "kadir.infinityfreeapp.com"
+            || host == "kadir.tryasp.net"
+            || host.EndsWith(".trycloudflare.com");
     })
           .AllowAnyHeader()
           .AllowAnyMethod()

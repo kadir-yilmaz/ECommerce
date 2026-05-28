@@ -6,6 +6,12 @@
 *.userosscache
 *.sln.docstates
 
+# Configuration files with secrets (keep local only)
+ECommerce.WebAPI/appsettings.json
+ECommerce.WebAPI/Properties/PublishProfiles/
+*.pubxml
+*.pubxml.user
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -33,6 +39,7 @@ bld/
 *.nupkg
 
 # Others
+[Pp]ublish/
 seq-data/
 .kiro/
 .dotnet/
