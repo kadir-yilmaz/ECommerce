@@ -29,7 +29,6 @@ jobs:
         dotnet publish ECommerce.WebAPI/ECommerce.WebAPI.csproj `
           -c Release `
           -o ./publish `
-          /p:PublishProfile=Release `
           /p:PublishProvider=IISWebDeploy `
           /p:WebPublishMethod=MSDeploy `
           /p:MSDeployServiceUrl="https://${{ secrets.WEBDEPLOY_SERVER }}:${{ secrets.WEBDEPLOY_PORT }}/msdeploy.axd" `
@@ -37,4 +36,7 @@ jobs:
           /p:Username="${{ secrets.WEBDEPLOY_USERNAME }}" `
           /p:Password="${{ secrets.WEBDEPLOY_PASSWORD }}" `
           /p:AllowUntrustedCertificate=True `
-          /p:EnableMSDeployBackup=False
+          /p:EnableMSDeployBackup=False `
+          /p:EnableMSDeployAppOffline=True `
+          /p:SkipExtraFilesOnServer=True
+
