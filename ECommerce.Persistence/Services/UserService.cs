@@ -54,7 +54,7 @@ namespace ECommerce.Persistence.Services
             if (user != null)
             {
                 user.RefreshToken = refreshToken;
-                user.RefreshTokenEndDate = accessTokenDate.AddSeconds(addOnAccessTokenDate);
+                user.RefreshTokenEndDate = accessTokenDate.AddDays(addOnAccessTokenDate);
                 await _userManager.UpdateAsync(user);
             }
             else

@@ -1,0 +1,40 @@
+name: Deploy ECommerce API (WebDeploy)
+
+on:
+  push:
+    branches:
+      - main # main branch'ine push yapıldığında tetiklenir
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest # WebDeploy (MSDeploy) aracı için Windows imajı gereklidir
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '10.0.x' # Projenin hedeflediği .NET 10.0 SDK versiyonu
+
+    - name: Restore Dependencies
+      run: dotnet restore ECommerce.WebAPI/ECommerce.WebAPI.csproj
+
+    - name: Build Project
+      run: dotnet build ECommerce.WebAPI/ECommerce.WebAPI.csproj --configuration Release --no-restore
+
+    - name: Publish & Deploy via WebDeploy
+      run: |
+        dotnet publish ECommerce.WebAPI/ECommerce.WebAPI.csproj `
+          -c Release `
+          -o ./publish `
+          /p:PublishProfile=Release `
+          /p:PublishProvider=IISWebDeploy `
+          /p:WebPublishMethod=MSDeploy `
+          /p:MSDeployServiceUrl="https://${{ secrets.WEBDEPLOY_SERVER }}:${{ secrets.WEBDEPLOY_PORT }}/msdeploy.axd" `
+          /p:DeployIisAppPath="${{ secrets.WEBDEPLOY_SITE }}" `
+          /p:Username="${{ secrets.WEBDEPLOY_USERNAME }}" `
+          /p:Password="${{ secrets.WEBDEPLOY_PASSWORD }}" `
+          /p:AllowUntrustedCertificate=True `
+          /p:EnableMSDeployBackup=False

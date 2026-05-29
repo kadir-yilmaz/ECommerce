@@ -30,4 +30,12 @@
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Prevent example files from being copied to output or published -->
+    <Content Update="appsettings.example.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.*.example.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+    <!-- Prevent local development settings from being published to production -->
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
 </Project>
