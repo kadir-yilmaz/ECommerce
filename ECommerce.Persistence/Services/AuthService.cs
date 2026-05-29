@@ -73,7 +73,7 @@ namespace ECommerce.Persistence.Services
                 token.RefreshToken = user.RefreshToken;
                 
                 // Set the HTTP cookie using the original expiration date so it strictly expires after 7 days from initial login
-                SetRefreshTokenCookie(token.RefreshToken, user.RefreshTokenEndDate);
+                SetRefreshTokenCookie(token.RefreshToken, user.RefreshTokenEndDate.Value);
                 
                 return token;
             }
