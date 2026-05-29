@@ -51,10 +51,10 @@ namespace ECommerce.Persistence.Services
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user, roles);
-                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 15);
+                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 7);
                 
-                // Write refresh token to HttpOnly cookie (valid for 15 days)
-                SetRefreshTokenCookie(token.RefreshToken, 15);
+                // Write refresh token to HttpOnly cookie (valid for 7 days)
+                SetRefreshTokenCookie(token.RefreshToken, 7);
                 
                 return token;
             }
@@ -68,10 +68,10 @@ namespace ECommerce.Persistence.Services
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(900, user, roles);
-                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 300);
+                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 7);
                 
-                // Write new refresh token to HttpOnly cookie (valid for 300 days)
-                SetRefreshTokenCookie(token.RefreshToken, 300);
+                // Write new refresh token to HttpOnly cookie (valid for 7 days)
+                SetRefreshTokenCookie(token.RefreshToken, 7);
                 
                 return token;
             }
@@ -88,7 +88,7 @@ namespace ECommerce.Persistence.Services
                 {
                     HttpOnly = true,
                     Secure = true,
-                    SameSite = SameSiteMode.Lax,
+                    SameSite = SameSiteMode.None,
                     Expires = DateTime.UtcNow.AddDays(addOnDays)
                 });
             }
