@@ -31,8 +31,19 @@ namespace ECommerce.WebAPI.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> RefreshTokenLogin([FromBody] RefreshTokenLoginCommandRequest refreshTokenLoginCommandRequest)
         {
+            if (string.IsNullOrEmpty(refreshTokenLoginCommandRequest.RefreshToken))
+            {
+                refreshTokenLoginCommandRequest.RefreshToken = Request.Cookies["refreshToken"] ?? string.Empty;
+            }
             RefreshTokenLoginCommandResponse response = await _mediator.Send(refreshTokenLoginCommandRequest);
             return Ok(response);
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("refreshToken");
+            return Ok(new { Message = "Oturum basariyla kapatildi" });
         }
 
         [HttpPost("google-login")]

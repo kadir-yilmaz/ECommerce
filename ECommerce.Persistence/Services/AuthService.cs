@@ -4,6 +4,7 @@ using ECommerce.Application.DTOs;
 using ECommerce.Application.Exceptions;
 using ECommerce.Application.Helpers;
 using ECommerce.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -17,19 +18,22 @@ namespace ECommerce.Persistence.Services
         readonly SignInManager<AppUser> _signInManager;
         readonly IUserService _userService;
         readonly IMailService _mailService;
+        readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             UserManager<AppUser> userManager,
             ITokenHandler tokenHandler,
             SignInManager<AppUser> signInManager,
             IUserService userService,
-            IMailService mailService)
+            IMailService mailService,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager;
             _tokenHandler = tokenHandler;
             _signInManager = signInManager;
             _userService = userService;
             _mailService = mailService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
@@ -48,6 +52,10 @@ namespace ECommerce.Persistence.Services
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user, roles);
                 await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 15);
+                
+                // Write refresh token to HttpOnly cookie (valid for 15 days)
+                SetRefreshTokenCookie(token.RefreshToken, 15);
+                
                 return token;
             }
             throw new AuthenticationErrorException();
@@ -61,10 +69,29 @@ namespace ECommerce.Persistence.Services
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(900, user, roles);
                 await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 300);
+                
+                // Write new refresh token to HttpOnly cookie (valid for 300 days)
+                SetRefreshTokenCookie(token.RefreshToken, 300);
+                
                 return token;
             }
             else
                 throw new NotFoundUserException();
+        }
+
+        private void SetRefreshTokenCookie(string refreshToken, int addOnDays)
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                httpContext.Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax,
+                    Expires = DateTime.UtcNow.AddDays(addOnDays)
+                });
+            }
         }
 
         public async Task<Token> FacebookLoginAsync(string authToken, int accessTokenLifeTime)
