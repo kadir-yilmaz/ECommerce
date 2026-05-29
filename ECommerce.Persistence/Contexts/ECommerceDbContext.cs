@@ -22,9 +22,16 @@ namespace ECommerce.Persistence.Contexts
         public DbSet<Endpoint> Endpoints { get; set; }
         public DbSet<CampaignImageFile> CampaignImageFiles { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+            builder.Entity<UserRefreshToken>()
+                .HasOne(urt => urt.User)
+                .WithMany(u => u.UserRefreshTokens)
+                .HasForeignKey(urt => urt.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Entity<Order>()
                 .HasKey(b => b.Id);
 

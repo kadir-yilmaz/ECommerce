@@ -19,6 +19,7 @@ namespace ECommerce.Persistence.Services
         readonly IUserService _userService;
         readonly IMailService _mailService;
         readonly IHttpContextAccessor _httpContextAccessor;
+        readonly ECommerce.Persistence.Contexts.ECommerceDbContext _context;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -26,7 +27,8 @@ namespace ECommerce.Persistence.Services
             SignInManager<AppUser> signInManager,
             IUserService userService,
             IMailService mailService,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ECommerce.Persistence.Contexts.ECommerceDbContext context)
         {
             _userManager = userManager;
             _tokenHandler = tokenHandler;
@@ -34,6 +36,7 @@ namespace ECommerce.Persistence.Services
             _userService = userService;
             _mailService = mailService;
             _httpContextAccessor = httpContextAccessor;
+            _context = context;
         }
 
         public async Task<Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
@@ -63,17 +66,21 @@ namespace ECommerce.Persistence.Services
  
         public async Task<Token> RefreshTokenLoginAsync(string refreshToken)
         {
-            AppUser? user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
-            if (user != null && user.RefreshTokenEndDate > DateTime.UtcNow)
+            var userRefreshToken = await _context.UserRefreshTokens
+                .Include(urt => urt.User)
+                .FirstOrDefaultAsync(urt => urt.Token == refreshToken && !urt.IsRevoked && urt.ExpirationDate > DateTime.UtcNow);
+
+            if (userRefreshToken != null)
             {
+                var user = userRefreshToken.User;
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(900, user, roles);
                 
                 // Keep the original refresh token and do not update the DB expiration date (no sliding/rotation)
-                token.RefreshToken = user.RefreshToken;
+                token.RefreshToken = userRefreshToken.Token;
                 
                 // Set the HTTP cookie using the original expiration date so it strictly expires after 7 days from initial login
-                SetRefreshTokenCookie(token.RefreshToken, user.RefreshTokenEndDate.Value);
+                SetRefreshTokenCookie(token.RefreshToken, userRefreshToken.ExpirationDate);
                 
                 return token;
             }
@@ -127,6 +134,19 @@ namespace ECommerce.Persistence.Services
                 return await _userManager.VerifyUserTokenAsync(user, _userManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", resetToken);
             }
             return false;
+        }
+
+        public async Task RevokeRefreshTokenAsync(string refreshToken)
+        {
+            var userRefreshToken = await _context.UserRefreshTokens
+                .FirstOrDefaultAsync(urt => urt.Token == refreshToken && !urt.IsRevoked);
+
+            if (userRefreshToken != null)
+            {
+                userRefreshToken.IsRevoked = true;
+                userRefreshToken.RevokedDate = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

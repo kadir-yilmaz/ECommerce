@@ -17,9 +17,11 @@ namespace ECommerce.WebAPI.Controllers
     public class AuthController : ControllerBase
     {
         readonly IMediator _mediator;
-        public AuthController(IMediator mediator)
+        readonly ECommerce.Application.Abstractions.Services.IAuthService _authService;
+        public AuthController(IMediator mediator, ECommerce.Application.Abstractions.Services.IAuthService authService)
         {
             _mediator = mediator;
+            _authService = authService;
         }
         [HttpPost("[action]")]
         public async Task<IActionResult> Login(LoginUserCommandRequest loginUserCommandRequest)
@@ -40,8 +42,13 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
+            string? refreshToken = Request.Cookies["refreshToken"];
+            if (!string.IsNullOrEmpty(refreshToken))
+            {
+                await _authService.RevokeRefreshTokenAsync(refreshToken);
+            }
             Response.Cookies.Delete("refreshToken");
             return Ok(new { Message = "Oturum basariyla kapatildi" });
         }

@@ -17,12 +17,18 @@ namespace ECommerce.Persistence.Services
         readonly UserManager<AppUser> _userManager;
         readonly IEndpointReadRepository _endpointReadRepository;
         readonly IMailService _mailService;
+        readonly ECommerce.Persistence.Contexts.ECommerceDbContext _context;
 
-        public UserService(UserManager<AppUser> userManager, IEndpointReadRepository endpointReadRepository, IMailService mailService)
+        public UserService(
+            UserManager<AppUser> userManager, 
+            IEndpointReadRepository endpointReadRepository, 
+            IMailService mailService,
+            ECommerce.Persistence.Contexts.ECommerceDbContext context)
         {
             _userManager = userManager;
             _endpointReadRepository = endpointReadRepository;
             _mailService = mailService;
+            _context = context;
         }
 
         public async Task<CreateUserResponse> CreateAsync(CreateUser model)
@@ -53,9 +59,16 @@ namespace ECommerce.Persistence.Services
         {
             if (user != null)
             {
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenEndDate = accessTokenDate.AddDays(addOnAccessTokenDate);
-                await _userManager.UpdateAsync(user);
+                var userRefreshToken = new UserRefreshToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Token = refreshToken,
+                    ExpirationDate = accessTokenDate.AddDays(addOnAccessTokenDate),
+                    IsRevoked = false
+                };
+                await _context.UserRefreshTokens.AddAsync(userRefreshToken);
+                await _context.SaveChangesAsync();
             }
             else
                 throw new Exception("Kullanici bulunamadi.");

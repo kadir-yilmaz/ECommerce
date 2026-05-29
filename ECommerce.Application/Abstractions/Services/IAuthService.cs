@@ -6,5 +6,6 @@ namespace ECommerce.Application.Abstractions.Services
     {
         Task PasswordResetAsnyc(string email);
         Task<bool> VerifyResetTokenAsync(string resetToken, string userId);
+        Task RevokeRefreshTokenAsync(string refreshToken);
     }
 }
