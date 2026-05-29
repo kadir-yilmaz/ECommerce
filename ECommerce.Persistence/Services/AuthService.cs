@@ -54,13 +54,13 @@ namespace ECommerce.Persistence.Services
                 await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 7);
                 
                 // Write refresh token to HttpOnly cookie (valid for 7 days)
-                SetRefreshTokenCookie(token.RefreshToken, 7);
+                SetRefreshTokenCookie(token.RefreshToken, DateTime.UtcNow.AddDays(7));
                 
                 return token;
             }
             throw new AuthenticationErrorException();
         }
-
+ 
         public async Task<Token> RefreshTokenLoginAsync(string refreshToken)
         {
             AppUser? user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
@@ -68,18 +68,20 @@ namespace ECommerce.Persistence.Services
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 Token token = _tokenHandler.CreateAccessToken(900, user, roles);
-                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 7);
                 
-                // Write new refresh token to HttpOnly cookie (valid for 7 days)
-                SetRefreshTokenCookie(token.RefreshToken, 7);
+                // Keep the original refresh token and do not update the DB expiration date (no sliding/rotation)
+                token.RefreshToken = user.RefreshToken;
+                
+                // Set the HTTP cookie using the original expiration date so it strictly expires after 7 days from initial login
+                SetRefreshTokenCookie(token.RefreshToken, user.RefreshTokenEndDate);
                 
                 return token;
             }
             else
                 throw new NotFoundUserException();
         }
-
-        private void SetRefreshTokenCookie(string refreshToken, int addOnDays)
+ 
+        private void SetRefreshTokenCookie(string refreshToken, DateTime expires)
         {
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext != null)
@@ -89,7 +91,7 @@ namespace ECommerce.Persistence.Services
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = DateTime.UtcNow.AddDays(addOnDays)
+                    Expires = expires
                 });
             }
         }
