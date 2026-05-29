@@ -18,6 +18,14 @@ jobs:
       with:
         dotnet-version: '10.0.x' # Projenin hedeflediği .NET 10.0 SDK versiyonu
 
+    - name: Create appsettings.json from Secrets
+      shell: pwsh
+      run: |
+        $appsettings = @"
+        ${{ secrets.APPSETTINGS_JSON }}
+        "@
+        $appsettings | Out-File -FilePath "ECommerce.WebAPI/appsettings.json" -Encoding utf8
+
     - name: Restore Dependencies
       run: dotnet restore ECommerce.WebAPI/ECommerce.WebAPI.csproj
 
