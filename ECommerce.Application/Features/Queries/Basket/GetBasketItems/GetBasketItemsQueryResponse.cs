@@ -12,5 +12,8 @@ namespace ECommerce.Application.Features.Queries.Basket.GetBasketItems
         public string Name { get; set; }
         public float Price { get; set; }
         public int Quantity { get; set; }
+        public string ProductId { get; set; }
+        public string CategoryId { get; set; }
+        public List<ECommerce.Application.DTOs.Product.ProductCampaignDto> Campaigns { get; set; }
     }
 }

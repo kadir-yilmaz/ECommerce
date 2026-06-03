@@ -15,6 +15,7 @@ namespace ECommerce.Domain.Entities
         public string Name { get; set; }
         public int Stock { get; set; }
         public float Price { get; set; }
+        public bool ShowOnHomepage { get; set; }
 
         public Guid? CategoryId { get; set; }
         public Category Category { get; set; }

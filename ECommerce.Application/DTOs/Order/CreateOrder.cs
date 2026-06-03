@@ -16,5 +16,6 @@ namespace ECommerce.Application.DTOs.Order
         public string ExpireMonth { get; set; }
         public string ExpireYear { get; set; }
         public string Cvv { get; set; }
+        public string? CouponCode { get; set; }
     }
 }

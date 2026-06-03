@@ -23,5 +23,6 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
         public string ExpireMonth { get; set; }
         public string ExpireYear { get; set; }
         public string Cvv { get; set; }
+        public string? CouponCode { get; set; }
     }
 }

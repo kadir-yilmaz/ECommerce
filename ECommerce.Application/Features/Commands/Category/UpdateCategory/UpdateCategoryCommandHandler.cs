@@ -24,6 +24,8 @@ namespace ECommerce.Application.Features.Commands.Category.UpdateCategory
 
             category.Name = request.Name;
             category.ParentCategoryId = request.ParentCategoryId;
+            category.ShowOnHomepage = request.ShowOnHomepage;
+            category.HomepageOrder = request.HomepageOrder;
             await _categoryWriteRepository.SaveAsync();
             return new UpdateCategoryCommandResponse();
         }

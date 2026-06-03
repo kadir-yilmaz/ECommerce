@@ -139,6 +139,9 @@ namespace ECommerce.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("CouponCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
@@ -186,6 +189,56 @@ namespace ECommerce.Persistence.Migrations
                     b.ToTable("BasketItems");
                 });
 
+            modelBuilder.Entity("ECommerce.Domain.Entities.Campaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("DiscountRate")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int?>("FreeQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MinAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int?>("MinQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProductId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RuleType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Campaigns");
+                });
+
             modelBuilder.Entity("ECommerce.Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -195,12 +248,18 @@ namespace ECommerce.Persistence.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("HomepageOrder")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("ParentCategoryId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ShowOnHomepage")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -254,6 +313,49 @@ namespace ECommerce.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.DiscountCoupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DiscountValue")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime?>("ExpirationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("MinCartAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UsageLimit")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DiscountCoupons");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.Endpoint", b =>
@@ -440,6 +542,39 @@ namespace ECommerce.Persistence.Migrations
                     b.ToTable("Orders");
                 });
 
+            modelBuilder.Entity("ECommerce.Domain.Entities.OrderDiscount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("DiscountAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("DiscountName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("OrderDiscounts");
+                });
+
             modelBuilder.Entity("ECommerce.Domain.Entities.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -458,6 +593,9 @@ namespace ECommerce.Persistence.Migrations
 
                     b.Property<float>("Price")
                         .HasColumnType("real");
+
+                    b.Property<bool>("ShowOnHomepage")
+                        .HasColumnType("bit");
 
                     b.Property<int>("Stock")
                         .HasColumnType("int");
@@ -786,6 +924,17 @@ namespace ECommerce.Persistence.Migrations
                     b.Navigation("Basket");
                 });
 
+            modelBuilder.Entity("ECommerce.Domain.Entities.OrderDiscount", b =>
+                {
+                    b.HasOne("ECommerce.Domain.Entities.Order", "Order")
+                        .WithMany("OrderDiscounts")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("ECommerce.Domain.Entities.Product", b =>
                 {
                     b.HasOne("ECommerce.Domain.Entities.Category", "Category")
@@ -910,6 +1059,8 @@ namespace ECommerce.Persistence.Migrations
                 {
                     b.Navigation("CompletedOrder")
                         .IsRequired();
+
+                    b.Navigation("OrderDiscounts");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.Product", b =>

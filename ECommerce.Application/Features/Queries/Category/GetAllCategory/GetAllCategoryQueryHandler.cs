@@ -22,7 +22,9 @@ namespace ECommerce.Application.Features.Queries.Category.GetAllCategory
             {
                 c.Id,
                 c.Name,
-                c.ParentCategoryId
+                c.ParentCategoryId,
+                c.ShowOnHomepage,
+                c.HomepageOrder
             }).ToListAsync(cancellationToken);
 
             return new GetAllCategoryQueryResponse

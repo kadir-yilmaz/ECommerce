@@ -15,15 +15,18 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
     {
         readonly IProductReadRepository _productReadRepository;
         readonly ICategoryReadRepository _categoryReadRepository;
+        readonly ECommerce.Application.Repositories.Campaign.ICampaignReadRepository _campaignReadRepository;
         readonly ILogger<GetAllProductQueryHandler> _logger;
 
         public GetAllProductQueryHandler(
             IProductReadRepository productReadRepository, 
             ICategoryReadRepository categoryReadRepository,
+            ECommerce.Application.Repositories.Campaign.ICampaignReadRepository campaignReadRepository,
             ILogger<GetAllProductQueryHandler> logger)
         {
             _productReadRepository = productReadRepository;
             _categoryReadRepository = categoryReadRepository;
+            _campaignReadRepository = campaignReadRepository;
             _logger = logger;
         }
 
@@ -50,6 +53,11 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                 query = query.Where(p => p.Name.ToLower().Contains(search));
             }
 
+            if (request.IsShowcase == true)
+            {
+                query = query.Where(p => p.ShowOnHomepage);
+            }
+
             var totalProductCount = query.Count();
 
             query = request.SortType switch
@@ -61,20 +69,41 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                 _ => query.OrderByDescending(p => p.CreatedDate)
             };
 
-            var products = query
+            var activeCampaigns = _campaignReadRepository.GetAll(false).Where(c => c.IsActive).ToList();
+
+            var productsDb = query
                 .Skip(request.Page * request.Size).Take(request.Size)
                 .Include(p => p.ProductImageFiles)
-                .Select(p => new
+                .ToList();
+
+            var products = productsDb.Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Stock,
+                p.Price,
+                p.CreatedDate,
+                p.UpdatedDate,
+                p.ShowOnHomepage,
+                ProductImageFiles = p.ProductImageFiles.Select(pif => new {
+                    pif.Id,
+                    pif.Path,
+                    pif.FileName,
+                    pif.Showcase
+                }).ToList(),
+                p.CategoryId,
+                Campaigns = activeCampaigns.Where(c => 
+                    (c.ProductId != null && Guid.TryParse(c.ProductId, out var prodId) && prodId == p.Id) || 
+                    (c.CategoryId != null && Guid.TryParse(c.CategoryId, out var catId) && p.CategoryId.HasValue && catId == p.CategoryId.Value)
+                ).Select(c => new ECommerce.Application.DTOs.Product.ProductCampaignDto
                 {
-                    p.Id,
-                    p.Name,
-                    p.Stock,
-                    p.Price,
-                    p.CreatedDate,
-                    p.UpdatedDate,
-                    p.ProductImageFiles,
-                    p.CategoryId
-                }).ToList();
+                    Id = c.Id.ToString(),
+                    Name = c.Name,
+                    Description = c.Description,
+                    RuleType = c.RuleType,
+                    DiscountRate = c.DiscountRate
+                }).ToList()
+            }).ToList();
 
             return new()
             {

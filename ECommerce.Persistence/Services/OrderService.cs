@@ -30,6 +30,7 @@ namespace ECommerce.Persistence.Services
         readonly IProductWriteRepository _productWriteRepository;
         readonly UserManager<AppUser> _userManager;
         readonly IHttpContextAccessor _httpContextAccessor;
+        readonly ECommerce.Application.Abstractions.Discount.IDiscountService _discountService;
 
         public OrderService(
             IOrderWriteRepository orderWriteRepository, 
@@ -43,7 +44,8 @@ namespace ECommerce.Persistence.Services
             IBasketReadRepository basketReadRepository,
             IProductWriteRepository productWriteRepository,
             UserManager<AppUser> userManager,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            ECommerce.Application.Abstractions.Discount.IDiscountService discountService)
         {
             _orderWriteRepository = orderWriteRepository;
             _orderReadRepository = orderReadRepository;
@@ -57,6 +59,7 @@ namespace ECommerce.Persistence.Services
             _productWriteRepository = productWriteRepository;
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
+            _discountService = discountService;
         }
 
         public async Task<(bool succeeded, string errorMessage)> CreateOrderAsync(CreateOrder createOrder)
@@ -89,20 +92,45 @@ namespace ECommerce.Persistence.Services
                 return (false, "Kullanıcı bulunamadı.");
 
             // Calculate total price of basket items
-            decimal totalPrice = (decimal)completeBasket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity);
+            decimal basePrice = (decimal)completeBasket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity);
 
-            if (totalPrice > IyzipayMaxPaymentAmount)
+            // Apply discounts
+            var discountRequest = new ECommerce.Application.DTOs.Discount.CalculateDiscountRequest
             {
-                _logger.LogWarning("CreateOrderAsync blocked because order total {TotalPrice} exceeds Iyzipay max amount {MaxAmount}.", totalPrice, IyzipayMaxPaymentAmount);
+                CouponCode = createOrder.CouponCode,
+                Items = completeBasket.BasketItems.Select(bi => new ECommerce.Application.DTOs.Discount.CalculateDiscountItem
+                {
+                    ProductId = bi.ProductId.ToString(),
+                    ProductName = bi.Product.Name,
+                    CategoryId = bi.Product.CategoryId.ToString(),
+                    Quantity = bi.Quantity,
+                    UnitPrice = (decimal)bi.Product.Price
+                }).ToList()
+            };
+
+            var discountResponse = await _discountService.CalculateDiscountAsync(discountRequest);
+            
+            decimal finalTotalPrice = discountResponse != null 
+                ? (decimal)discountResponse.FinalTotal 
+                : basePrice;
+
+            if (discountResponse != null && !discountResponse.IsShippingFree && finalTotalPrice < 500)
+            {
+                finalTotalPrice += 59.99m; // add shipping
+            }
+
+            if (finalTotalPrice > IyzipayMaxPaymentAmount)
+            {
+                _logger.LogWarning("CreateOrderAsync blocked because order total {TotalPrice} exceeds Iyzipay max amount {MaxAmount}.", finalTotalPrice, IyzipayMaxPaymentAmount);
                 return (false, "Iyzico 100.000 TL uzeri odemeleri kabul etmez. Lutfen sepet tutarini 100.000 TL veya altina dusurun.");
             }
 
-            _logger.LogInformation("Processing payment on Iyzipay for order {OrderCode}. Total: {TotalPrice}", orderCode, totalPrice);
+            _logger.LogInformation("Processing payment on Iyzipay for order {OrderCode}. Total: {TotalPrice}", orderCode, finalTotalPrice);
 
             // Call Iyzipay to process payment
             var (paymentSucceeded, paymentMessage, paymentId) = await _paymentService.ProcessPaymentAsync(
                 createOrder,
-                totalPrice,
+                finalTotalPrice,
                 orderCode,
                 user.Email ?? "test@email.com",
                 user.NameSurname ?? user.UserName ?? "Customer"
@@ -150,7 +178,7 @@ namespace ECommerce.Persistence.Services
                 await _mailService.SendMailAsync(
                     user.Email ?? "test@email.com",
                     $"{orderCode} Numaralı Siparişiniz Alındı",
-                    $"Sayın {user.NameSurname}, merhaba.<br>{orderCode} kodlu siparişiniz başarıyla alınmıştır. Toplam Tutar: {totalPrice:C2}. Ödemeniz Iyzico güvencesiyle tahsil edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz."
+                    $"Sayın {user.NameSurname}, merhaba.<br>{orderCode} kodlu siparişiniz başarıyla alınmıştır. Toplam Tutar: {finalTotalPrice:C2}. Ödemeniz Iyzico güvencesiyle tahsil edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz."
                 );
             }
             catch (Exception ex)

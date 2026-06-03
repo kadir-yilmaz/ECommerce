@@ -8,6 +8,11 @@ namespace ECommerce.Domain.Entities
 {
     public class Order : BaseEntity
     {
+        public Order()
+        {
+            OrderDiscounts = new HashSet<OrderDiscount>();
+        }
+
         //public Guid CustomerId { get; set; }
         public string Description { get; set; }
         public string Address { get; set; }
@@ -33,5 +38,6 @@ namespace ECommerce.Domain.Entities
         //public ICollection<Product> Products { get; set; }
         //public Customer Customer { get; set; }
         public CompletedOrder CompletedOrder { get; set; }
+        public ICollection<OrderDiscount> OrderDiscounts { get; set; }
     }
 }

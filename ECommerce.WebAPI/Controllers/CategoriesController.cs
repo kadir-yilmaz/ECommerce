@@ -1,6 +1,8 @@
 using ECommerce.Application.Features.Commands.Category.CreateCategory;
 using ECommerce.Application.Features.Commands.Category.RemoveCategory;
 using ECommerce.Application.Features.Commands.Category.UpdateCategory;
+using ECommerce.Application.Features.Commands.Category.ChangeShowcaseCategory;
+using ECommerce.Application.Features.Commands.Category.UpdateCategoryOrder;
 using ECommerce.Application.Features.Queries.Category.GetAllCategory;
 using ECommerce.Application.Features.Queries.Category.GetByIdCategory;
 using MediatR;
@@ -51,6 +53,22 @@ namespace ECommerce.WebAPI.Controllers
         public async Task<IActionResult> Put([FromBody] UpdateCategoryCommandRequest request)
         {
             UpdateCategoryCommandResponse response = await _mediator.Send(request);
+            return Ok(response);
+        }
+
+        [HttpPut("change-showcase")]
+        [Authorize(AuthenticationSchemes = "Admin")]
+        public async Task<IActionResult> ChangeShowcase([FromBody] ChangeShowcaseCategoryCommandRequest request)
+        {
+            ChangeShowcaseCategoryCommandResponse response = await _mediator.Send(request);
+            return Ok(response);
+        }
+
+        [HttpPut("update-order")]
+        [Authorize(AuthenticationSchemes = "Admin")]
+        public async Task<IActionResult> UpdateOrder([FromBody] UpdateCategoryOrderCommandRequest request)
+        {
+            UpdateCategoryOrderCommandResponse response = await _mediator.Send(request);
             return Ok(response);
         }
 

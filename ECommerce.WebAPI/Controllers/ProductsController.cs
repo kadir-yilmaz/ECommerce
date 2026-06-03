@@ -4,6 +4,7 @@ using ECommerce.Application.Enums;
 using ECommerce.Application.Features.Commands.Product.CreateProduct;
 using ECommerce.Application.Features.Commands.Product.RemoveProduct;
 using ECommerce.Application.Features.Commands.Product.UpdateProduct;
+using ECommerce.Application.Features.Commands.Product.ChangeShowcaseProduct;
 using ECommerce.Application.Features.Commands.Product.UpdateStockQrCodeToProduct;
 using ECommerce.Application.Features.Commands.ProductImageFile.ChangeShowcaseImage;
 using ECommerce.Application.Features.Commands.ProductImageFile.RemoveProductImage;
@@ -63,6 +64,15 @@ namespace ECommerce.WebAPI.Controllers
         {
             UpdateProductCommandResponse response = await _mediator.Send(updateProductCommandRequest);
             return Ok();
+        }
+
+        [HttpPut("change-showcase")]
+        [Authorize(AuthenticationSchemes = "Admin")]
+        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Products, ActionType = ActionType.Updating, Definition = "Change Showcase Product")]
+        public async Task<IActionResult> ChangeShowcaseProduct([FromBody] ChangeShowcaseProductCommandRequest request)
+        {
+            ChangeShowcaseProductCommandResponse response = await _mediator.Send(request);
+            return Ok(response);
         }
 
         [HttpDelete("{Id}")]

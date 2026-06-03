@@ -23,6 +23,9 @@ namespace ECommerce.Persistence.Contexts
         public DbSet<CampaignImageFile> CampaignImageFiles { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
+        public DbSet<Campaign> Campaigns { get; set; }
+        public DbSet<DiscountCoupon> DiscountCoupons { get; set; }
+        public DbSet<OrderDiscount> OrderDiscounts { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -38,6 +41,12 @@ namespace ECommerce.Persistence.Contexts
             builder.Entity<Order>()
                 .HasIndex(o => o.OrderCode)
                 .IsUnique();
+
+            builder.Entity<Order>()
+                .HasMany(o => o.OrderDiscounts)
+                .WithOne(od => od.Order)
+                .HasForeignKey(od => od.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // A user can accumulate historical baskets through orders.
             builder.Entity<AppUser>()
@@ -71,6 +80,26 @@ namespace ECommerce.Persistence.Contexts
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Campaign>()
+                .Property(c => c.DiscountRate)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<Campaign>()
+                .Property(c => c.MinAmount)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<DiscountCoupon>()
+                .Property(dc => dc.DiscountValue)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<DiscountCoupon>()
+                .Property(dc => dc.MinCartAmount)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<OrderDiscount>()
+                .Property(od => od.DiscountAmount)
+                .HasColumnType("decimal(18, 2)");
 
             base.OnModelCreating(builder);
         }

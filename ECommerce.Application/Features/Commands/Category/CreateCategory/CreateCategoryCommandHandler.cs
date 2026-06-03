@@ -19,7 +19,9 @@ namespace ECommerce.Application.Features.Commands.Category.CreateCategory
             await _categoryWriteRepository.AddAsync(new Domain.Entities.Category()
             {
                 Name = request.Name,
-                ParentCategoryId = request.ParentCategoryId
+                ParentCategoryId = request.ParentCategoryId,
+                ShowOnHomepage = request.ShowOnHomepage,
+                HomepageOrder = request.HomepageOrder
             });
             await _categoryWriteRepository.SaveAsync();
             return new CreateCategoryCommandResponse();

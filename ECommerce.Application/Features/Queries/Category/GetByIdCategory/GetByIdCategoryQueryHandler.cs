@@ -24,7 +24,9 @@ namespace ECommerce.Application.Features.Queries.Category.GetByIdCategory
             {
                 Id = category.Id.ToString(),
                 Name = category.Name,
-                ParentCategoryId = category.ParentCategoryId
+                ParentCategoryId = category.ParentCategoryId,
+                ShowOnHomepage = category.ShowOnHomepage,
+                HomepageOrder = category.HomepageOrder
             };
         }
     }

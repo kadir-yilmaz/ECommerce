@@ -60,6 +60,13 @@ namespace ECommerce.Persistence
             services.AddScoped<ECommerce.Application.Repositories.Category.ICategoryReadRepository, ECommerce.Persistence.Repositories.Category.CategoryReadRepository>();
             services.AddScoped<ECommerce.Application.Repositories.Category.ICategoryWriteRepository, ECommerce.Persistence.Repositories.Category.CategoryWriteRepository>();
 
+            services.AddScoped<ECommerce.Application.Repositories.Campaign.ICampaignReadRepository, ECommerce.Persistence.Repositories.CampaignReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.Campaign.ICampaignWriteRepository, ECommerce.Persistence.Repositories.CampaignWriteRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponReadRepository, ECommerce.Persistence.Repositories.DiscountCouponReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository, ECommerce.Persistence.Repositories.DiscountCouponWriteRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountReadRepository, ECommerce.Persistence.Repositories.OrderDiscountReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountWriteRepository, ECommerce.Persistence.Repositories.OrderDiscountWriteRepository>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IExternalAuthentication, AuthService>();

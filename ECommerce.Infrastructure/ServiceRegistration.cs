@@ -20,6 +20,12 @@ namespace ECommerce.Infrastructure
             serviceCollection.AddScoped<IApplicationService, ApplicationService>();
             serviceCollection.AddScoped<IQRCodeService, QRCodeService>();
             serviceCollection.AddScoped<IPaymentService, PaymentService>();
+
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.TotalAmountRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.BuyXGetYFreeRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.CheapestItemDiscountRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.FreeShippingRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.IDiscountService, ECommerce.Infrastructure.Services.DiscountService>();
         }
         public static void AddStorage<T>(this IServiceCollection serviceCollection) where T : StorageBase, IStorage
         {

@@ -9,5 +9,6 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
         public System.Guid? CategoryId { get; set; }
         public string? SortType { get; set; }
         public string? Search { get; set; }
+        public bool? IsShowcase { get; set; }
     }
 }

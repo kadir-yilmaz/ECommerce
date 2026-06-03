@@ -50,7 +50,8 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
                 CardNumber = request.CardNumber,
                 ExpireMonth = request.ExpireMonth,
                 ExpireYear = request.ExpireYear,
-                Cvv = request.Cvv
+                Cvv = request.Cvv,
+                CouponCode = request.CouponCode
             });
 
             if (!succeeded)

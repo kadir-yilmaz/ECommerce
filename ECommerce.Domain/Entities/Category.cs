@@ -12,6 +12,8 @@ namespace ECommerce.Domain.Entities
         }
 
         public string Name { get; set; }
+        public bool ShowOnHomepage { get; set; }
+        public int HomepageOrder { get; set; }
         
         public Guid? ParentCategoryId { get; set; }
         public Category ParentCategory { get; set; }
