@@ -1,5 +1,6 @@
 using ECommerce.Persistence;
 using ECommerce.Persistence.Contexts;
+using Microsoft.EntityFrameworkCore;
 using ECommerce.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using ECommerce.Application;
@@ -152,6 +153,8 @@ using (var scope = app.Services.CreateScope())
 
     var adminEmail = app.Configuration["AdminUser:Email"];
     var adminPassword = app.Configuration["AdminUser:Password"];
+
+    await context.Database.MigrateAsync();
 
     await DataSeeder.SeedCategoriesAsync(context);
     await DataSeeder.SeedProductsAsync(context);
