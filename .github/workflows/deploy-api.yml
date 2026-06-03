@@ -45,6 +45,6 @@ jobs:
           /p:Password="${{ secrets.WEBDEPLOY_PASSWORD }}" `
           /p:AllowUntrustedCertificate=True `
           /p:EnableMSDeployBackup=False `
-          /p:EnableMSDeployAppOffline=True `
+          /p:EnableMSDeployAppOffline=False `
           /p:SkipExtraFilesOnServer=True
 
