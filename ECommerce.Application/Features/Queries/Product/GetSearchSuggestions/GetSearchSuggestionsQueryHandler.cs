@@ -31,29 +31,27 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
             var q = request.Q.Trim().ToLower();
 
             // 1. BRAND MATCHES (Marka)
-            // Ürün adının ilk kelimesi marka kabul edilir.
-            // "cor" → DB'de adı "cor" içeren ürünlerin ilk kelimesi → "Corsair" gibi
-            var brandCandidateNames = await _productReadRepository.GetAll(false)
-                .Where(p => p.Name.ToLower().Contains(q))
-                .Select(p => p.Name)
+            var matchedBrandsDb = await _productReadRepository.GetAll(false)
+                .Where(p => p.Brand != null && p.Brand.ToLower().Contains(q))
+                .Select(p => p.Brand)
+                .Distinct()
                 .ToListAsync(cancellationToken);
 
-            var matchedBrands = brandCandidateNames
-                .Select(name => name.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0])
-                .Where(brand => !string.IsNullOrWhiteSpace(brand))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                // StartsWith önce, Contains sonra
+            var matchedBrands = matchedBrandsDb
                 .OrderByDescending(brand => brand.ToLower().StartsWith(q))
                 .Take(3)
                 .ToList();
 
             foreach (var brand in matchedBrands)
             {
-                results.Add(new GetSearchSuggestionsQueryResponse
+                if (!string.IsNullOrWhiteSpace(brand))
                 {
-                    Text = brand,
-                    Type = "Marka"
-                });
+                    results.Add(new GetSearchSuggestionsQueryResponse
+                    {
+                        Text = brand,
+                        Type = "Marka"
+                    });
+                }
             }
 
             // 2. CATEGORY MATCHES (Kategori)
@@ -75,16 +73,17 @@ namespace ECommerce.Application.Features.Queries.Product.GetSearchSuggestions
 
             // 3. PRODUCT MATCHES (Ürün)
             var matchedProducts = await _productReadRepository.GetAll(false)
-                .Where(p => p.Name.ToLower().Contains(q))
-                .Select(p => new { p.Id, p.Name })
+                .Where(p => p.Name.ToLower().Contains(q) || (p.Brand != null && p.Brand.ToLower().Contains(q)))
+                .Select(p => new { p.Id, p.Name, p.Brand })
                 .Take(6)
                 .ToListAsync(cancellationToken);
 
             foreach (var prod in matchedProducts)
             {
+                var displayName = string.IsNullOrWhiteSpace(prod.Brand) ? prod.Name : $"{prod.Brand} {prod.Name}";
                 results.Add(new GetSearchSuggestionsQueryResponse
                 {
-                    Text = prod.Name,
+                    Text = displayName,
                     Type = "Ürün",
                     TargetId = prod.Id.ToString()
                 });

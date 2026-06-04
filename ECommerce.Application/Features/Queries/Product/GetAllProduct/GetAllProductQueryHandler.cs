@@ -50,7 +50,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var search = request.Search.Trim().ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(search));
+                query = query.Where(p => p.Name.ToLower().Contains(search) || (p.Brand != null && p.Brand.ToLower().Contains(search)));
             }
 
             if (request.IsShowcase == true)
@@ -80,6 +80,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
             {
                 p.Id,
                 p.Name,
+                p.Brand,
                 p.Stock,
                 p.Price,
                 p.CreatedDate,

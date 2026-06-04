@@ -22,7 +22,8 @@ namespace ECommerce.Application.Features.Commands.Product.CreateProduct
                 Name = request.Name,
                 Price = request.Price,
                 Stock = request.Stock,
-                CategoryId = request.CategoryId
+                CategoryId = request.CategoryId,
+                Brand = request.Brand
             };
             await _productWriteRepository.AddAsync(product);
             await _productWriteRepository.SaveAsync();

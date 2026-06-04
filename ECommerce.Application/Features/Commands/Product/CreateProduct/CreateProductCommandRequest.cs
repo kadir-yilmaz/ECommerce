@@ -8,5 +8,6 @@ namespace ECommerce.Application.Features.Commands.Product.CreateProduct
         public int Stock { get; set; }
         public float Price { get; set; }
         public Guid? CategoryId { get; set; }
+        public string Brand { get; set; }
     }
 }

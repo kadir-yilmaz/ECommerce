@@ -27,6 +27,7 @@ namespace ECommerce.Application.Features.Commands.Product.UpdateProduct
             product.Price = request.Price;
             product.Name = request.Name;
             product.CategoryId = request.CategoryId;
+            product.Brand = request.Brand;
             await _productWriteRepository.SaveAsync();
             _logger.LogInformation("Product güncellendi...");
             return new();

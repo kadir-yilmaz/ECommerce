@@ -11,7 +11,7 @@ namespace ECommerce.Domain.Entities
             BasketItems = new HashSet<BasketItem>();
             FavoriteItems = new HashSet<FavoriteItem>();
         }
-        
+        public string Brand { get; set; }
         public string Name { get; set; }
         public int Stock { get; set; }
         public float Price { get; set; }

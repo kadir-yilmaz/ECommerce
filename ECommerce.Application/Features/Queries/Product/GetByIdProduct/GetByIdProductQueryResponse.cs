@@ -8,6 +8,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
         public float Price { get; set; }
         public bool ShowOnHomepage { get; set; }
         public System.Guid? CategoryId { get; set; }
+        public string Brand { get; set; }
         public System.Collections.Generic.List<ECommerce.Application.DTOs.Product.ProductCampaignDto> Campaigns { get; set; }
     }
 }

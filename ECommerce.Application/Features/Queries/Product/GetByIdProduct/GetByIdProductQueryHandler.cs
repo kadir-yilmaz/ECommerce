@@ -41,6 +41,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
                 Stock = product.Stock,
                 ShowOnHomepage = product.ShowOnHomepage,
                 CategoryId = product.CategoryId,
+                Brand = product.Brand,
                 Campaigns = activeCampaigns
             };
         }
