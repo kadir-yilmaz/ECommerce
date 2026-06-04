@@ -24,7 +24,8 @@ namespace ECommerce.Application.Features.Queries.Category.GetAllCategory
                 c.Name,
                 c.ParentCategoryId,
                 c.ShowOnHomepage,
-                c.HomepageOrder
+                c.HomepageOrder,
+                ProductCount = c.Products.Count()
             }).ToListAsync(cancellationToken);
 
             return new GetAllCategoryQueryResponse

@@ -9,6 +9,7 @@ namespace ECommerce.Application.Consts
         public const string Roles = "Roles";
         public const string ApplicationServices = "Application Services";
         public const string Campaigns = "Campaigns";
+        public const string Dashboards = "Dashboards";
         public const string ProductImageFiles = "Product Image Files";
         public const string ProductImages = "Product Images";
     }
