@@ -1,9 +1,9 @@
-using ECommerce.Application.ViewModels.Products;
+using ECommerce.Application.Features.Commands.Product.CreateProduct;
 using FluentValidation;
 
 namespace ECommerce.Application.Validators.Products
 {
-    public class CreateProductValidator : AbstractValidator<VM_Create_Product>
+    public class CreateProductValidator : AbstractValidator<CreateProductCommandRequest>
     {
         public CreateProductValidator()
         {
@@ -28,6 +28,11 @@ namespace ECommerce.Application.Validators.Products
                     .WithMessage("Lütfen fiyat bilgisini boş geçmeyiniz.")
                 .Must(s => s >= 0)
                     .WithMessage("Fiyat bilgisi negatif olamaz!");
+
+            RuleFor(p => p.CategoryId)
+                .NotEmpty()
+                .NotNull()
+                    .WithMessage("Lütfen ürün için bir kategori seçiniz.");
         }
     }
 }

@@ -52,3 +52,6 @@ seq-data/
 **/wwwroot/**/*.jpg
 **/wwwroot/**/*.jpeg
 **/wwwroot/**/*.webp
+
+# Seed Data
+seed-sql/
