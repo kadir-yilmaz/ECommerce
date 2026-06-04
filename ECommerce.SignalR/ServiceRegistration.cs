@@ -10,6 +10,7 @@ namespace ECommerce.SignalR
         {
             collection.AddTransient<IProductHubService, ProductHubService>();
             collection.AddTransient<IOrderHubService, OrderHubService>();
+            collection.AddTransient<ICouponHubService, CouponHubService>();
             collection.AddSignalR();
         }
     }

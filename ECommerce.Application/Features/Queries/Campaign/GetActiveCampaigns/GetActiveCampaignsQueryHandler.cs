@@ -18,7 +18,7 @@ namespace ECommerce.Application.Features.Queries.Campaigns.GetActiveCampaigns
 
         public async Task<GetActiveCampaignsQueryResponse> Handle(GetActiveCampaignsQueryRequest request, CancellationToken cancellationToken)
         {
-            var activeCampaigns = await _campaignReadRepository.GetWhere(c => c.IsActive)
+            var activeCampaigns = await _campaignReadRepository.GetWhere(c => c.IsActive && (c.EndDate == null || c.EndDate > DateTime.UtcNow))
                 .Select(c => new GetActiveCampaignsQueryResponse.CampaignDto
                 {
                     Id = c.Id.ToString(),
@@ -30,7 +30,9 @@ namespace ECommerce.Application.Features.Queries.Campaigns.GetActiveCampaigns
                     MinQuantity = c.MinQuantity,
                     FreeQuantity = c.FreeQuantity,
                     ProductId = c.ProductId,
-                    CategoryId = c.CategoryId
+                    CategoryId = c.CategoryId,
+                    Brand = c.Brand,
+                    EndDate = c.EndDate
                 })
                 .ToListAsync(cancellationToken);
 

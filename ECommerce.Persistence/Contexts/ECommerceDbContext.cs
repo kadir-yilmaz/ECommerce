@@ -26,6 +26,8 @@ namespace ECommerce.Persistence.Contexts
         public DbSet<Campaign> Campaigns { get; set; }
         public DbSet<DiscountCoupon> DiscountCoupons { get; set; }
         public DbSet<OrderDiscount> OrderDiscounts { get; set; }
+        public DbSet<UserCoupon> UserCoupons { get; set; }
+        public DbSet<RewardRule> RewardRules { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -97,8 +99,47 @@ namespace ECommerce.Persistence.Contexts
                 .Property(dc => dc.MinCartAmount)
                 .HasColumnType("decimal(18, 2)");
 
+            builder.Entity<DiscountCoupon>()
+                .Property(dc => dc.MaxDiscountAmount)
+                .HasColumnType("decimal(18, 2)");
+
             builder.Entity<OrderDiscount>()
                 .Property(od => od.DiscountAmount)
+                .HasColumnType("decimal(18, 2)");
+
+            // UserCoupon ilişkileri
+            builder.Entity<UserCoupon>()
+                .HasOne(uc => uc.DiscountCoupon)
+                .WithMany(dc => dc.UserCoupons)
+                .HasForeignKey(uc => uc.DiscountCouponId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserCoupon>()
+                .HasOne(uc => uc.User)
+                .WithMany(u => u.UserCoupons)
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Aynı kullanıcı aynı kupona birden fazla kez atanamaz
+            builder.Entity<UserCoupon>()
+                .HasIndex(uc => new { uc.UserId, uc.DiscountCouponId })
+                .IsUnique();
+
+            // RewardRule decimal precision
+            builder.Entity<RewardRule>()
+                .Property(r => r.MinTotalSpent)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<RewardRule>()
+                .Property(r => r.RewardDiscountValue)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<RewardRule>()
+                .Property(r => r.RewardMaxDiscountAmount)
+                .HasColumnType("decimal(18, 2)");
+
+            builder.Entity<RewardRule>()
+                .Property(r => r.CouponMinCartAmount)
                 .HasColumnType("decimal(18, 2)");
 
             base.OnModelCreating(builder);

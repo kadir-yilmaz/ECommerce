@@ -12,5 +12,7 @@ namespace ECommerce.Application.Features.Queries.Campaigns.GetCampaignById
         public int? FreeQuantity { get; set; }
         public string? ProductId { get; set; }
         public string? CategoryId { get; set; }
+        public string? Brand { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 }

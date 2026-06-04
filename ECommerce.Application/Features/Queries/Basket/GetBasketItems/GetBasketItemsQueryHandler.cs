@@ -24,7 +24,7 @@ namespace ECommerce.Application.Features.Queries.Basket.GetBasketItems
         public async Task<List<GetBasketItemsQueryResponse>> Handle(GetBasketItemsQueryRequest request, CancellationToken cancellationToken)
         {
             List<BasketItem> basketItems = await _basketService.GetBasketItemsAsync();
-            var activeCampaigns = _campaignReadRepository.GetWhere(c => c.IsActive).ToList();
+            var activeCampaigns = _campaignReadRepository.GetWhere(c => c.IsActive && (c.EndDate == null || c.EndDate > DateTime.UtcNow)).ToList();
 
             return basketItems.Select(ba => new GetBasketItemsQueryResponse
             {
@@ -34,16 +34,33 @@ namespace ECommerce.Application.Features.Queries.Basket.GetBasketItems
                 Quantity = ba.Quantity,
                 ProductId = ba.ProductId.ToString(),
                 CategoryId = ba.Product.CategoryId?.ToString() ?? "",
+                ImagePath = ba.Product.ProductImageFiles?.FirstOrDefault(p => p.Showcase)?.Path 
+                            ?? ba.Product.ProductImageFiles?.FirstOrDefault()?.Path,
+                Brand = ba.Product.Brand,
                 Campaigns = activeCampaigns.Where(c => 
-                    (c.ProductId != null && c.ProductId == ba.ProductId.ToString()) || 
-                    (c.CategoryId != null && ba.Product.CategoryId != null && c.CategoryId == ba.Product.CategoryId.ToString())
+                    (c.ProductId != null && (
+                        string.Equals(c.ProductId, ba.ProductId.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                        c.ProductId.Split(',', StringSplitOptions.RemoveEmptyEntries).Any(idStr => string.Equals(idStr.Trim(), ba.ProductId.ToString(), StringComparison.OrdinalIgnoreCase))
+                    )) || 
+                    (c.RuleType == "CategoryDiscount" && c.CategoryId != null && ba.Product.CategoryId != null && string.Equals(c.CategoryId, ba.Product.CategoryId.ToString(), StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(c.Brand) || (!string.IsNullOrEmpty(ba.Product.Brand) && string.Equals(c.Brand, ba.Product.Brand, StringComparison.OrdinalIgnoreCase)))
+                    ) ||
+                    (c.RuleType == "BrandDiscount" && !string.IsNullOrEmpty(c.Brand) && !string.IsNullOrEmpty(ba.Product.Brand) && string.Equals(c.Brand, ba.Product.Brand, StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(c.CategoryId) || (ba.Product.CategoryId != null && string.Equals(c.CategoryId, ba.Product.CategoryId.ToString(), StringComparison.OrdinalIgnoreCase)))
+                    ) ||
+                    (c.RuleType != "CategoryDiscount" && c.RuleType != "BrandDiscount" && c.CategoryId != null && ba.Product.CategoryId != null && string.Equals(c.CategoryId, ba.Product.CategoryId.ToString(), StringComparison.OrdinalIgnoreCase))
                 ).Select(c => new ECommerce.Application.DTOs.Product.ProductCampaignDto
                 {
                     Id = c.Id.ToString(),
                     Name = c.Name,
                     Description = c.Description,
                     RuleType = c.RuleType,
-                    DiscountRate = c.DiscountRate
+                    DiscountRate = c.DiscountRate,
+                    MinAmount = c.MinAmount,
+                    MinQuantity = c.MinQuantity,
+                    FreeQuantity = c.FreeQuantity,
+                    ProductId = c.ProductId,
+                    CategoryId = c.CategoryId
                 }).ToList()
             }).ToList();
         }

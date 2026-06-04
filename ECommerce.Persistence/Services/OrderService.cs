@@ -31,6 +31,11 @@ namespace ECommerce.Persistence.Services
         readonly UserManager<AppUser> _userManager;
         readonly IHttpContextAccessor _httpContextAccessor;
         readonly ECommerce.Application.Abstractions.Discount.IDiscountService _discountService;
+        readonly ECommerce.Application.Abstractions.Discount.IRewardService _rewardService;
+        readonly ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponReadRepository _discountCouponReadRepository;
+        readonly ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository _discountCouponWriteRepository;
+        readonly ECommerce.Application.Repositories.UserCoupon.IUserCouponReadRepository _userCouponReadRepository;
+        readonly ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository _userCouponWriteRepository;
 
         public OrderService(
             IOrderWriteRepository orderWriteRepository, 
@@ -45,7 +50,12 @@ namespace ECommerce.Persistence.Services
             IProductWriteRepository productWriteRepository,
             UserManager<AppUser> userManager,
             IHttpContextAccessor httpContextAccessor,
-            ECommerce.Application.Abstractions.Discount.IDiscountService discountService)
+            ECommerce.Application.Abstractions.Discount.IDiscountService discountService,
+            ECommerce.Application.Abstractions.Discount.IRewardService rewardService,
+            ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponReadRepository discountCouponReadRepository,
+            ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository discountCouponWriteRepository,
+            ECommerce.Application.Repositories.UserCoupon.IUserCouponReadRepository userCouponReadRepository,
+            ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository userCouponWriteRepository)
         {
             _orderWriteRepository = orderWriteRepository;
             _orderReadRepository = orderReadRepository;
@@ -60,6 +70,11 @@ namespace ECommerce.Persistence.Services
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
             _discountService = discountService;
+            _rewardService = rewardService;
+            _discountCouponReadRepository = discountCouponReadRepository;
+            _discountCouponWriteRepository = discountCouponWriteRepository;
+            _userCouponReadRepository = userCouponReadRepository;
+            _userCouponWriteRepository = userCouponWriteRepository;
         }
 
         public async Task<(bool succeeded, string errorMessage)> CreateOrderAsync(CreateOrder createOrder)
@@ -98,6 +113,7 @@ namespace ECommerce.Persistence.Services
             var discountRequest = new ECommerce.Application.DTOs.Discount.CalculateDiscountRequest
             {
                 CouponCode = createOrder.CouponCode,
+                UserId = user.Id,
                 Items = completeBasket.BasketItems.Select(bi => new ECommerce.Application.DTOs.Discount.CalculateDiscountItem
                 {
                     ProductId = bi.ProductId.ToString(),
@@ -114,9 +130,13 @@ namespace ECommerce.Persistence.Services
                 ? (decimal)discountResponse.FinalTotal 
                 : basePrice;
 
-            if (discountResponse != null && !discountResponse.IsShippingFree && finalTotalPrice < 500)
+            if (discountResponse != null)
             {
-                finalTotalPrice += 59.99m; // add shipping
+                finalTotalPrice += discountResponse.ShippingFee;
+            }
+            else
+            {
+                finalTotalPrice += 50m;
             }
 
             if (finalTotalPrice > IyzipayMaxPaymentAmount)
@@ -157,11 +177,21 @@ namespace ECommerce.Persistence.Services
             {
                 Address = address,
                 Id = basket.Id,
-                Description = createOrder.Description,
+                Description = string.Empty,
                 OrderCode = orderCode,
                 Status = 1 // Ödeme tamamlandı
             });
             await _orderWriteRepository.SaveAsync();
+
+            // Check and grant rewards immediately after placing order
+            try
+            {
+                await _rewardService.CheckAndGrantRewardsAsync(user.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking rewards for user {UserId} after order {OrderCode} created", user.Id, orderCode);
+            }
 
             // Decrement stock for each ordered product
             foreach (var basketItem in completeBasket.BasketItems)
@@ -170,6 +200,37 @@ namespace ECommerce.Persistence.Services
                     basketItem.Product.Stock = Math.Max(0, basketItem.Product.Stock - basketItem.Quantity);
             }
             await _productWriteRepository.SaveAsync();
+
+            // Mark Coupon as Used
+            if (!string.IsNullOrEmpty(createOrder.CouponCode))
+            {
+                var appliedCoupon = await _discountCouponReadRepository.GetWhere(c => c.Code == createOrder.CouponCode).FirstOrDefaultAsync();
+                if (appliedCoupon != null)
+                {
+                    appliedCoupon.UsedCount++;
+                    _discountCouponWriteRepository.Update(appliedCoupon);
+
+                    var userCoupon = await _userCouponReadRepository.GetWhere(uc => uc.DiscountCouponId == appliedCoupon.Id && uc.UserId == user.Id).FirstOrDefaultAsync();
+                    if (userCoupon != null)
+                    {
+                        userCoupon.IsUsed = true;
+                        userCoupon.UsedDate = DateTime.UtcNow;
+                        _userCouponWriteRepository.Update(userCoupon);
+                    }
+                    else
+                    {
+                        await _userCouponWriteRepository.AddAsync(new UserCoupon
+                        {
+                            DiscountCouponId = appliedCoupon.Id,
+                            UserId = user.Id,
+                            IsUsed = true,
+                            UsedDate = DateTime.UtcNow
+                        });
+                    }
+                    await _userCouponWriteRepository.SaveAsync();
+                    await _discountCouponWriteRepository.SaveAsync();
+                }
+            }
 
             _logger.LogInformation("Order {OrderCode} saved successfully. Sending email notification...", orderCode);
 
@@ -376,7 +437,9 @@ namespace ECommerce.Persistence.Services
 
         public async Task<bool> UpdateOrderStatusAsync(string orderId, int status)
         {
-            Order? order = await _orderReadRepository.GetByIdAsync(orderId);
+            Order? order = await _orderReadRepository.Table
+                .Include(o => o.Basket)
+                .FirstOrDefaultAsync(o => o.Id == Guid.Parse(orderId));
             if (order == null)
                 return false;
 
@@ -385,6 +448,20 @@ namespace ECommerce.Persistence.Services
             await _orderWriteRepository.SaveAsync();
 
             _logger.LogInformation("Order {OrderId} status updated to {Status}", orderId, status);
+
+            // Sipariş Delivered (5) statüsüne geçtiyse ödül kontrolü yap
+            if (status == 5 && order.Basket != null)
+            {
+                try
+                {
+                    await _rewardService.CheckAndGrantRewardsAsync(order.Basket.UserId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error checking rewards for user {UserId} after order {OrderId} delivered", order.Basket.UserId, orderId);
+                }
+            }
+
             return true;
         }
 

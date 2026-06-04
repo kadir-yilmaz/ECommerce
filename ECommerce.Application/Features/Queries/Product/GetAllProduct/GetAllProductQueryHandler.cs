@@ -58,6 +58,17 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                 query = query.Where(p => p.ShowOnHomepage);
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Brand))
+            {
+                query = query.Where(p => p.Brand != null && p.Brand.ToLower() == request.Brand.Trim().ToLower());
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.ProductIds))
+            {
+                var productIdsList = request.ProductIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                query = query.Where(p => productIdsList.Contains(p.Id.ToString()));
+            }
+
             var totalProductCount = query.Count();
 
             query = request.SortType switch
@@ -69,7 +80,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                 _ => query.OrderByDescending(p => p.CreatedDate)
             };
 
-            var activeCampaigns = _campaignReadRepository.GetAll(false).Where(c => c.IsActive).ToList();
+            var activeCampaigns = _campaignReadRepository.GetAll(false).Where(c => c.IsActive && (c.EndDate == null || c.EndDate > DateTime.UtcNow)).ToList();
 
             var productsDb = query
                 .Skip(request.Page * request.Size).Take(request.Size)
@@ -94,8 +105,17 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                 }).ToList(),
                 p.CategoryId,
                 Campaigns = activeCampaigns.Where(c => 
-                    (c.ProductId != null && Guid.TryParse(c.ProductId, out var prodId) && prodId == p.Id) || 
-                    (c.CategoryId != null && Guid.TryParse(c.CategoryId, out var catId) && p.CategoryId.HasValue && catId == p.CategoryId.Value)
+                    (c.ProductId != null && (
+                        (Guid.TryParse(c.ProductId, out var prodId) && prodId == p.Id) ||
+                        c.ProductId.Split(',', StringSplitOptions.RemoveEmptyEntries).Any(idStr => Guid.TryParse(idStr.Trim(), out var parsedId) && parsedId == p.Id)
+                    )) || 
+                    (c.RuleType == "CategoryDiscount" && c.CategoryId != null && Guid.TryParse(c.CategoryId, out var catId) && p.CategoryId.HasValue && catId == p.CategoryId.Value &&
+                        (string.IsNullOrEmpty(c.Brand) || (!string.IsNullOrEmpty(p.Brand) && string.Equals(c.Brand, p.Brand, StringComparison.OrdinalIgnoreCase)))
+                    ) ||
+                    (c.RuleType == "BrandDiscount" && !string.IsNullOrEmpty(c.Brand) && !string.IsNullOrEmpty(p.Brand) && string.Equals(c.Brand, p.Brand, StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(c.CategoryId) || (Guid.TryParse(c.CategoryId, out var bCatId) && p.CategoryId.HasValue && bCatId == p.CategoryId.Value))
+                    ) ||
+                    (c.RuleType != "CategoryDiscount" && c.RuleType != "BrandDiscount" && c.CategoryId != null && Guid.TryParse(c.CategoryId, out var legacyCatId) && p.CategoryId.HasValue && legacyCatId == p.CategoryId.Value)
                 ).Select(c => new ECommerce.Application.DTOs.Product.ProductCampaignDto
                 {
                     Id = c.Id.ToString(),

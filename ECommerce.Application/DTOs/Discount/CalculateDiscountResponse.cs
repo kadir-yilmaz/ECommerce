@@ -12,6 +12,8 @@ namespace ECommerce.Application.DTOs.Discount
         public decimal TotalDiscount { get; set; }
         public decimal FinalTotal { get; set; }
         public bool IsShippingFree { get; set; }
+        public decimal ShippingFee { get; set; }
+        public decimal ShippingThreshold { get; set; }
         public List<DiscountDetail> AppliedDiscounts { get; set; } = new();
     }
 

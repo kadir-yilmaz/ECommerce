@@ -218,6 +218,7 @@ namespace ECommerce.Persistence.Services
                 Basket? result = await _basketReadRepository.Table
                      .Include(b => b.BasketItems)
                      .ThenInclude(bi => bi.Product)
+                     .ThenInclude(p => p.ProductImageFiles)
                      .FirstOrDefaultAsync(b => b.Id == basket.Id);
 
                 var items = result?.BasketItems.ToList() ?? new List<BasketItem>();
@@ -232,7 +233,9 @@ namespace ECommerce.Persistence.Services
                 
                 foreach (var sbItem in sessionBasket.BasketItems)
                 {
-                    var product = await _productReadRepository.GetByIdAsync(sbItem.ProductId);
+                    var product = await _productReadRepository.Table
+                        .Include(p => p.ProductImageFiles)
+                        .FirstOrDefaultAsync(p => p.Id == Guid.Parse(sbItem.ProductId));
                     if (product != null)
                     {
                         basketItems.Add(new BasketItem

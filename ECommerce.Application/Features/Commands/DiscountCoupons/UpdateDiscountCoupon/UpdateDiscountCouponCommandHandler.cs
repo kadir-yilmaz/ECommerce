@@ -27,10 +27,11 @@ namespace ECommerce.Application.Features.Commands.DiscountCoupons.UpdateDiscount
             coupon.Code = request.Code;
             coupon.DiscountType = request.DiscountType;
             coupon.DiscountValue = request.DiscountValue;
+            coupon.MaxDiscountAmount = request.MaxDiscountAmount;
             coupon.MinCartAmount = request.MinCartAmount;
             coupon.IsActive = request.IsActive;
             coupon.ExpirationDate = request.ExpirationDate;
-            coupon.UsageLimit = request.UsageLimit;
+            coupon.Scope = request.Scope;
 
             _discountCouponWriteRepository.Update(coupon);
             await _discountCouponWriteRepository.SaveAsync();

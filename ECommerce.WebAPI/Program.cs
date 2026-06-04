@@ -143,6 +143,7 @@ app.Use(async (context, next) =>
 app.MapControllers();
 app.MapHub<ProductHub>("/products-hub");
 app.MapHub<OrderHub>("/orders-hub");
+app.MapHub<CouponHub>("/coupons-hub");
 
 // Seed data - DB boşsa 10 ürün ekle
 using (var scope = app.Services.CreateScope())

@@ -28,6 +28,8 @@ namespace ECommerce.Application.Features.Commands.Campaigns.CreateCampaign
                 FreeQuantity = request.FreeQuantity,
                 ProductId = request.ProductId,
                 CategoryId = request.CategoryId,
+                Brand = request.Brand,
+                EndDate = request.EndDate,
                 IsActive = request.IsActive
             };
 

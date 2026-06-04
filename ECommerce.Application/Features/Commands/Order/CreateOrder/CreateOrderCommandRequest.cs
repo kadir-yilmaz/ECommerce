@@ -10,7 +10,6 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
     public class CreateOrderCommandRequest : IRequest<CreateOrderCommandResponse>
     {
         public string? BasketId { get; set; }
-        public string Description { get; set; }
         public string ContactName { get; set; }
         public string PhoneNumber { get; set; }
         public string City { get; set; }

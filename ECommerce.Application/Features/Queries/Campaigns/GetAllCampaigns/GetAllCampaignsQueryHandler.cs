@@ -28,8 +28,10 @@ namespace ECommerce.Application.Features.Queries.Campaigns.GetAllCampaigns
                 DiscountRate = c.DiscountRate,
                 MinQuantity = c.MinQuantity,
                 FreeQuantity = c.FreeQuantity,
-                ProductId = c.ProductId.ToString(),
-                CategoryId = c.CategoryId.ToString(),
+                ProductId = c.ProductId != null ? c.ProductId.ToString() : null,
+                CategoryId = c.CategoryId != null ? c.CategoryId.ToString() : null,
+                Brand = c.Brand,
+                EndDate = c.EndDate,
                 IsActive = c.IsActive
             }).ToListAsync(cancellationToken);
 

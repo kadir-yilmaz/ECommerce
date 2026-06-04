@@ -33,6 +33,8 @@ namespace ECommerce.Application.Features.Commands.Campaigns.UpdateCampaign
             campaign.FreeQuantity = request.FreeQuantity;
             campaign.ProductId = request.ProductId;
             campaign.CategoryId = request.CategoryId;
+            campaign.Brand = request.Brand;
+            campaign.EndDate = request.EndDate;
             campaign.IsActive = request.IsActive;
 
             _campaignWriteRepository.Update(campaign);

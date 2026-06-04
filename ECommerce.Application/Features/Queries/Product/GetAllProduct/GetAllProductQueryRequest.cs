@@ -10,5 +10,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
         public string? SortType { get; set; }
         public string? Search { get; set; }
         public bool? IsShowcase { get; set; }
+        public string? Brand { get; set; }
+        public string? ProductIds { get; set; }
     }
 }

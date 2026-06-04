@@ -62,8 +62,6 @@ namespace ECommerce.Application.Validators.Orders
                 .NotEmpty().WithMessage("CVV zorunludur.")
                 .Matches(@"^\d{3,4}$").WithMessage("CVV 3 veya 4 haneli olmaldir.");
 
-            RuleFor(x => x.Description)
-                .MaximumLength(300).WithMessage("Siparis notu en fazla 300 karakter olabilir.");
         }
 
         private static bool BeValidMonth(string? month) =>

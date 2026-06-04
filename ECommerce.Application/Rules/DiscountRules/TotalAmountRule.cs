@@ -16,9 +16,9 @@ namespace ECommerce.Application.Rules.DiscountRules
             var targetedItems = request.Items.AsEnumerable();
 
             if (!string.IsNullOrEmpty(rule.ProductId))
-                targetedItems = targetedItems.Where(i => i.ProductId == rule.ProductId);
+                targetedItems = targetedItems.Where(i => string.Equals(i.ProductId, rule.ProductId, StringComparison.OrdinalIgnoreCase));
             else if (!string.IsNullOrEmpty(rule.CategoryId))
-                targetedItems = targetedItems.Where(i => i.CategoryId == rule.CategoryId);
+                targetedItems = targetedItems.Where(i => string.Equals(i.CategoryId, rule.CategoryId, StringComparison.OrdinalIgnoreCase));
 
             var categoryItems = targetedItems.ToList();
             var targetedTotal = categoryItems.Sum(i => i.UnitPrice * i.Quantity);

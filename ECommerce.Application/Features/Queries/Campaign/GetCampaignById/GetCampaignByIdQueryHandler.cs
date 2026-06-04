@@ -34,7 +34,9 @@ namespace ECommerce.Application.Features.Queries.Campaigns.GetCampaignById
                 MinQuantity = campaign.MinQuantity,
                 FreeQuantity = campaign.FreeQuantity,
                 ProductId = campaign.ProductId,
-                CategoryId = campaign.CategoryId
+                CategoryId = campaign.CategoryId,
+                Brand = campaign.Brand,
+                EndDate = campaign.EndDate
             };
         }
     }

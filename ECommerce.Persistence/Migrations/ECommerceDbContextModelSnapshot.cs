@@ -195,6 +195,9 @@ namespace ECommerce.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Brand")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("CategoryId")
                         .HasColumnType("nvarchar(max)");
 
@@ -207,6 +210,9 @@ namespace ECommerce.Persistence.Migrations
 
                     b.Property<decimal?>("DiscountRate")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("FreeQuantity")
                         .HasColumnType("int");
@@ -341,8 +347,18 @@ namespace ECommerce.Persistence.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsRewardCoupon")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxDiscountAmount")
+                        .HasColumnType("decimal(18, 2)");
+
                     b.Property<decimal>("MinCartAmount")
                         .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("UpdatedDate")
                         .HasColumnType("datetime2");
@@ -612,6 +628,87 @@ namespace ECommerce.Persistence.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.RewardRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CouponMinCartAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<int>("CouponValidityDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("MinTotalSpent")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PeriodInDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RewardDiscountType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("RewardDiscountValue")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal?>("RewardMaxDiscountAmount")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RewardRules");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.UserCoupon", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DiscountCouponId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UsedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscountCouponId");
+
+                    b.HasIndex("UserId", "DiscountCouponId")
+                        .IsUnique();
+
+                    b.ToTable("UserCoupons");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.UserRefreshToken", b =>
@@ -949,6 +1046,25 @@ namespace ECommerce.Persistence.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("ECommerce.Domain.Entities.UserCoupon", b =>
+                {
+                    b.HasOne("ECommerce.Domain.Entities.DiscountCoupon", "DiscountCoupon")
+                        .WithMany("UserCoupons")
+                        .HasForeignKey("DiscountCouponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ECommerce.Domain.Entities.AppUser", "User")
+                        .WithMany("UserCoupons")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DiscountCoupon");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ECommerce.Domain.Entities.UserRefreshToken", b =>
                 {
                     b.HasOne("ECommerce.Domain.Entities.AppUser", "User")
@@ -1032,6 +1148,8 @@ namespace ECommerce.Persistence.Migrations
 
                     b.Navigation("Favorites");
 
+                    b.Navigation("UserCoupons");
+
                     b.Navigation("UserRefreshTokens");
                 });
 
@@ -1047,6 +1165,11 @@ namespace ECommerce.Persistence.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("ECommerce.Domain.Entities.DiscountCoupon", b =>
+                {
+                    b.Navigation("UserCoupons");
                 });
 
             modelBuilder.Entity("ECommerce.Domain.Entities.Favorite", b =>

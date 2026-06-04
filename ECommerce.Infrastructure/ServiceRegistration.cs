@@ -25,7 +25,11 @@ namespace ECommerce.Infrastructure
             serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.BuyXGetYFreeRule>();
             serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.CheapestItemDiscountRule>();
             serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.FreeShippingRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.BrandDiscountRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.CategoryDiscountRule>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.ICampaignRule, ECommerce.Application.Rules.DiscountRules.SelectedProductsDiscountRule>();
             serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.IDiscountService, ECommerce.Infrastructure.Services.DiscountService>();
+            serviceCollection.AddScoped<ECommerce.Application.Abstractions.Discount.IRewardService, ECommerce.Infrastructure.Services.RewardService>();
         }
         public static void AddStorage<T>(this IServiceCollection serviceCollection) where T : StorageBase, IStorage
         {

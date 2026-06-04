@@ -1,6 +1,9 @@
 using ECommerce.Application.Repositories;
 using MediatR;
 using P = ECommerce.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
 
 namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
 {
@@ -16,7 +19,11 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
 
         public async Task<GetByIdProductQueryResponse> Handle(GetByIdProductQueryRequest request, CancellationToken cancellationToken)
         {
-            P.Product product = await _productReadRepository.GetByIdAsync(request.Id, false);
+            Guid productGuid = Guid.Parse(request.Id);
+            P.Product product = await _productReadRepository.Table
+                .Include(p => p.ProductImageFiles)
+                .FirstOrDefaultAsync(p => p.Id == productGuid, cancellationToken);
+                
             if (product == null)
                 throw new System.Collections.Generic.KeyNotFoundException("Product not found");
 
@@ -42,7 +49,16 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
                 ShowOnHomepage = product.ShowOnHomepage,
                 CategoryId = product.CategoryId,
                 Brand = product.Brand,
-                Campaigns = activeCampaigns
+                Campaigns = activeCampaigns,
+                ImagePath = product.ProductImageFiles?.FirstOrDefault(p => p.Showcase)?.Path 
+                            ?? product.ProductImageFiles?.FirstOrDefault()?.Path,
+                ProductImageFiles = product.ProductImageFiles?.Select(pif => new GetByIdProductImageResponse
+                {
+                    Id = pif.Id.ToString(),
+                    Path = pif.Path,
+                    FileName = pif.FileName,
+                    Showcase = pif.Showcase
+                }).ToList() ?? new System.Collections.Generic.List<GetByIdProductImageResponse>()
             };
         }
     }

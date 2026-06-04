@@ -66,6 +66,10 @@ namespace ECommerce.Persistence
             services.AddScoped<ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository, ECommerce.Persistence.Repositories.DiscountCouponWriteRepository>();
             services.AddScoped<ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountReadRepository, ECommerce.Persistence.Repositories.OrderDiscountReadRepository>();
             services.AddScoped<ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountWriteRepository, ECommerce.Persistence.Repositories.OrderDiscountWriteRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.UserCoupon.IUserCouponReadRepository, ECommerce.Persistence.Repositories.UserCouponReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository, ECommerce.Persistence.Repositories.UserCouponWriteRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.RewardRule.IRewardRuleReadRepository, ECommerce.Persistence.Repositories.RewardRuleReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.RewardRule.IRewardRuleWriteRepository, ECommerce.Persistence.Repositories.RewardRuleWriteRepository>();
 
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();

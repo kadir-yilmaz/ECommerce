@@ -14,6 +14,8 @@ namespace ECommerce.Application.Features.Queries.Basket.GetBasketItems
         public int Quantity { get; set; }
         public string ProductId { get; set; }
         public string CategoryId { get; set; }
+        public string? ImagePath { get; set; }
+        public string Brand { get; set; }
         public List<ECommerce.Application.DTOs.Product.ProductCampaignDto> Campaigns { get; set; }
     }
 }

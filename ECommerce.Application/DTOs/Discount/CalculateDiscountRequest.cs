@@ -10,6 +10,7 @@ namespace ECommerce.Application.DTOs.Discount
     {
         public List<CalculateDiscountItem> Items { get; set; } = new();
         public string? CouponCode { get; set; }
+        public string? UserId { get; set; }
     }
 
     public class CalculateDiscountItem
@@ -17,6 +18,7 @@ namespace ECommerce.Application.DTOs.Discount
         public string ProductId { get; set; }
         public string ProductName { get; set; }
         public string CategoryId { get; set; }
+        public string? Brand { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
     }

@@ -18,17 +18,27 @@ namespace ECommerce.Application.Features.Queries.DiscountCoupons.GetAllDiscountC
 
         public async Task<GetAllDiscountCouponsQueryResponse> Handle(GetAllDiscountCouponsQueryRequest request, CancellationToken cancellationToken)
         {
-            var coupons = await _discountCouponReadRepository.GetAll(false).Select(c => new DiscountCouponDto
+            var coupons = await _discountCouponReadRepository.Table
+                .Include(c => c.UserCoupons)
+                .ThenInclude(uc => uc.User)
+                .Select(c => new DiscountCouponDto
             {
                 Id = c.Id.ToString(),
                 Code = c.Code,
                 DiscountType = c.DiscountType,
                 DiscountValue = c.DiscountValue,
+                MaxDiscountAmount = c.MaxDiscountAmount,
                 MinCartAmount = c.MinCartAmount,
                 IsActive = c.IsActive,
                 ExpirationDate = c.ExpirationDate,
-                UsageLimit = c.UsageLimit,
-                UsedCount = c.UsedCount
+                UsedCount = c.UsedCount,
+                Scope = c.Scope,
+                IsRewardCoupon = c.IsRewardCoupon,
+                AssignedUsers = c.UserCoupons.Select(uc => new CouponUserDto
+                {
+                    UserName = uc.User.UserName,
+                    IsUsed = uc.IsUsed
+                }).ToList()
             }).ToListAsync(cancellationToken);
 
             return new GetAllDiscountCouponsQueryResponse

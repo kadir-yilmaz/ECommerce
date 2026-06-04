@@ -38,7 +38,6 @@ namespace ECommerce.Application.Features.Commands.Order.CreateOrder
             var (succeeded, errorMessage) = await _orderService.CreateOrderAsync(new()
             {
                 BasketId = request.BasketId,
-                Description = request.Description,
                 ContactName = request.ContactName,
                 PhoneNumber = request.PhoneNumber,
                 City = request.City,

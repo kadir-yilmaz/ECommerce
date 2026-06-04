@@ -20,6 +20,15 @@ namespace ECommerce.WebAPI.Controllers
         [HttpPost("calculate")]
         public async Task<IActionResult> CalculateDiscount([FromBody] CalculateDiscountRequest request)
         {
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                var nameIdentifier = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(nameIdentifier))
+                {
+                    request.UserId = nameIdentifier;
+                }
+            }
+
             var query = new CalculateCartDiscountQueryRequest { DiscountRequest = request };
             var response = await _mediator.Send(query);
             return Ok(response.DiscountResponse);

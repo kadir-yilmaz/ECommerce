@@ -13,5 +13,7 @@ namespace ECommerce.Domain.Entities
         // A user can have multiple historical baskets, but only one active basket without an order.
         public ICollection<Basket> Baskets { get; set; } = new List<Basket>();
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+        public ICollection<UserCoupon> UserCoupons { get; set; } = new List<UserCoupon>();
     }
 }
+

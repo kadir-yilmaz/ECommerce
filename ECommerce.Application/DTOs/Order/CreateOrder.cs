@@ -3,7 +3,6 @@ namespace ECommerce.Application.DTOs.Order
     public class CreateOrder
     {
         public string? BasketId { get; set; }
-        public string Description { get; set; }
         public string ContactName { get; set; }
         public string PhoneNumber { get; set; }
         public string City { get; set; }
