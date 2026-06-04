@@ -103,11 +103,6 @@ namespace ECommerce.Persistence.Services
             }
         }
 
-        public async Task<Token> FacebookLoginAsync(string authToken, int accessTokenLifeTime)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<Token> GoogleLoginAsync(string idToken, int accessTokenLifeTime)
         {
             throw new NotImplementedException();
