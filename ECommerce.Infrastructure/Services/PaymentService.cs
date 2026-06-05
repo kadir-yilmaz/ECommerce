@@ -5,6 +5,7 @@ using Iyzipay;
 using Iyzipay.Model;
 using Iyzipay.Request;
 using Microsoft.Extensions.Options;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,13 +32,70 @@ namespace ECommerce.Infrastructure.Services
             decimal totalAmount, 
             string orderCode, 
             string userEmail, 
-            string userName)
+            string userName,
+            IEnumerable<PaymentBasketItem>? basketItems = null)
         {
             try
             {
                 var names = userName.Split(' ');
                 var firstName = names.Length > 0 ? names[0] : "Customer";
                 var lastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : "Customer";
+
+                // Iyzico basket items oluştur
+                List<Iyzipay.Model.BasketItem> iyzicoBasketItems;
+
+                if (basketItems != null && basketItems.Any())
+                {
+                    var itemList = basketItems.ToList();
+                    // Oransal dağıtım: her ürünün fiyatlarının toplamı totalAmount'a eşit olmalı
+                    decimal allocatedSum = 0m;
+                    iyzicoBasketItems = new List<Iyzipay.Model.BasketItem>();
+
+                    for (int i = 0; i < itemList.Count; i++)
+                    {
+                        decimal itemPrice;
+                        if (i == itemList.Count - 1)
+                        {
+                            // Son ürüne kalan tüm tutarı ver (yuvarlama farkını absorbe et)
+                            itemPrice = totalAmount - allocatedSum;
+                        }
+                        else
+                        {
+                            // 2 ondalık basamağa yuvarla
+                            itemPrice = System.Math.Round(itemList[i].Price, 2);
+                        }
+
+                        // Iyzico sıfır veya negatif item kabul etmez, minimum 0.01
+                        if (itemPrice < 0.01m)
+                            itemPrice = 0.01m;
+
+                        allocatedSum += itemPrice;
+
+                        iyzicoBasketItems.Add(new Iyzipay.Model.BasketItem
+                        {
+                            Id = itemList[i].Id,
+                            Name = itemList[i].Name,
+                            Category1 = itemList[i].Category,
+                            ItemType = BasketItemType.PHYSICAL.ToString(),
+                            Price = itemPrice.ToString("F2", CultureInfo.InvariantCulture)
+                        });
+                    }
+                }
+                else
+                {
+                    // Fallback: tek kalem
+                    iyzicoBasketItems = new List<Iyzipay.Model.BasketItem>
+                    {
+                        new Iyzipay.Model.BasketItem
+                        {
+                            Id = "BI" + orderCode,
+                            Name = "E-Commerce Basket Total",
+                            Category1 = "Shopping",
+                            ItemType = BasketItemType.PHYSICAL.ToString(),
+                            Price = totalAmount.ToString("F2", CultureInfo.InvariantCulture)
+                        }
+                    };
+                }
 
                 var request = new CreatePaymentRequest
                 {
@@ -89,17 +147,7 @@ namespace ECommerce.Infrastructure.Services
                         Description = order.AddressLine,
                         ZipCode = order.PostalCode
                     },
-                    BasketItems = new System.Collections.Generic.List<Iyzipay.Model.BasketItem>
-                    {
-                        new Iyzipay.Model.BasketItem
-                        {
-                            Id = "BI" + orderCode,
-                            Name = "E-Commerce Basket Total",
-                            Category1 = "Shopping",
-                            ItemType = BasketItemType.PHYSICAL.ToString(),
-                            Price = totalAmount.ToString("F2", CultureInfo.InvariantCulture)
-                        }
-                    }
+                    BasketItems = iyzicoBasketItems
                 };
 
                 var payment = await Payment.Create(request, _options);
@@ -120,3 +168,4 @@ namespace ECommerce.Infrastructure.Services
         }
     }
 }
+

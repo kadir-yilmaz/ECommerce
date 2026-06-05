@@ -36,6 +36,7 @@ namespace ECommerce.Persistence.Services
         readonly ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository _discountCouponWriteRepository;
         readonly ECommerce.Application.Repositories.UserCoupon.IUserCouponReadRepository _userCouponReadRepository;
         readonly ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository _userCouponWriteRepository;
+        readonly ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountWriteRepository _orderDiscountWriteRepository;
 
         public OrderService(
             IOrderWriteRepository orderWriteRepository, 
@@ -55,7 +56,8 @@ namespace ECommerce.Persistence.Services
             ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponReadRepository discountCouponReadRepository,
             ECommerce.Application.Repositories.DiscountCoupon.IDiscountCouponWriteRepository discountCouponWriteRepository,
             ECommerce.Application.Repositories.UserCoupon.IUserCouponReadRepository userCouponReadRepository,
-            ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository userCouponWriteRepository)
+            ECommerce.Application.Repositories.UserCoupon.IUserCouponWriteRepository userCouponWriteRepository,
+            ECommerce.Application.Repositories.OrderDiscount.IOrderDiscountWriteRepository orderDiscountWriteRepository)
         {
             _orderWriteRepository = orderWriteRepository;
             _orderReadRepository = orderReadRepository;
@@ -75,6 +77,7 @@ namespace ECommerce.Persistence.Services
             _discountCouponWriteRepository = discountCouponWriteRepository;
             _userCouponReadRepository = userCouponReadRepository;
             _userCouponWriteRepository = userCouponWriteRepository;
+            _orderDiscountWriteRepository = orderDiscountWriteRepository;
         }
 
         public async Task<(bool succeeded, string errorMessage)> CreateOrderAsync(CreateOrder createOrder)
@@ -89,11 +92,13 @@ namespace ECommerce.Persistence.Services
                 return (false, "Aktif sepet bulunamadı.");
             }
 
-            // Load complete basket details including products
+            // Load complete basket details including products and their categories
             var completeBasket = await _basketReadRepository.Table
                 .Include(b => b.BasketItems)
                 .ThenInclude(bi => bi.Product)
+                .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(b => b.Id == basket.Id);
+
 
             if (completeBasket == null || completeBasket.BasketItems == null || !completeBasket.BasketItems.Any())
                 return (false, "Sepetinizde ürün bulunamadı.");
@@ -119,6 +124,7 @@ namespace ECommerce.Persistence.Services
                     ProductId = bi.ProductId.ToString(),
                     ProductName = bi.Product.Name,
                     CategoryId = bi.Product.CategoryId.ToString(),
+                    Brand = bi.Product.Brand,
                     Quantity = bi.Quantity,
                     UnitPrice = (decimal)bi.Product.Price
                 }).ToList()
@@ -147,14 +153,19 @@ namespace ECommerce.Persistence.Services
 
             _logger.LogInformation("Processing payment on Iyzipay for order {OrderCode}. Total: {TotalPrice}", orderCode, finalTotalPrice);
 
+            // Iyzico'ya ürün bazlı basket items oluştur (indirim oransal dağıtımı)
+            var paymentBasketItems = BuildPaymentBasketItems(completeBasket.BasketItems, discountResponse, finalTotalPrice, orderCode);
+
             // Call Iyzipay to process payment
             var (paymentSucceeded, paymentMessage, paymentId) = await _paymentService.ProcessPaymentAsync(
                 createOrder,
                 finalTotalPrice,
                 orderCode,
                 user.Email ?? "test@email.com",
-                user.NameSurname ?? user.UserName ?? "Customer"
+                user.NameSurname ?? user.UserName ?? "Customer",
+                paymentBasketItems
             );
+
 
             if (!paymentSucceeded)
             {
@@ -182,6 +193,22 @@ namespace ECommerce.Persistence.Services
                 Status = 1 // Ödeme tamamlandı
             });
             await _orderWriteRepository.SaveAsync();
+
+            // OrderDiscount kayıtlarını oluştur
+            if (discountResponse?.AppliedDiscounts?.Any() == true)
+            {
+                foreach (var discount in discountResponse.AppliedDiscounts)
+                {
+                    await _orderDiscountWriteRepository.AddAsync(new ECommerce.Domain.Entities.OrderDiscount
+                    {
+                        OrderId = basket.Id,
+                        DiscountName = discount.DiscountName,
+                        DiscountType = discount.DiscountType,
+                        DiscountAmount = discount.DiscountAmount
+                    });
+                }
+                await _orderDiscountWriteRepository.SaveAsync();
+            }
 
             // Check and grant rewards immediately after placing order
             try
@@ -236,10 +263,24 @@ namespace ECommerce.Persistence.Services
 
             try
             {
+                var discountHtml = string.Empty;
+                if (discountResponse?.AppliedDiscounts?.Any() == true)
+                {
+                    var discountRows = string.Join("", discountResponse.AppliedDiscounts.Select(d =>
+                        $"<tr><td style='padding:4px 8px;color:#555;'>{d.DiscountName} ({d.DiscountType})</td><td style='padding:4px 8px;color:#e53935;text-align:right;'>-{d.DiscountAmount:C2}</td></tr>"
+                    ));
+                    discountHtml = $"<br><br><strong>Uygulanan İndirimler:</strong><table style='width:100%;border-collapse:collapse;margin-top:6px;'>{discountRows}<tr style='border-top:1px solid #ddd;'><td style='padding:4px 8px;font-weight:bold;'>Toplam İndirim</td><td style='padding:4px 8px;color:#e53935;text-align:right;font-weight:bold;'>-{discountResponse.TotalDiscount:C2}</td></tr></table>";
+                }
+
                 await _mailService.SendMailAsync(
                     user.Email ?? "test@email.com",
                     $"{orderCode} Numaralı Siparişiniz Alındı",
-                    $"Sayın {user.NameSurname}, merhaba.<br>{orderCode} kodlu siparişiniz başarıyla alınmıştır. Toplam Tutar: {finalTotalPrice:C2}. Ödemeniz Iyzico güvencesiyle tahsil edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz."
+                    $"Sayın {user.NameSurname}, merhaba.<br>{orderCode} kodlu siparişiniz başarıyla alınmıştır.<br><br>" +
+                    $"<strong>Ürün Toplamı:</strong> {discountResponse?.OriginalTotal ?? basePrice:C2}<br>" +
+                    $"Kargo: {(discountResponse?.IsShippingFree == true ? "Ücretsiz" : $"{discountResponse?.ShippingFee ?? 50m:C2}")}<br>" +
+                    $"{discountHtml}<br>" +
+                    $"<strong>Ödenecek Tutar: {finalTotalPrice:C2}</strong><br><br>" +
+                    $"Ödemeniz Iyzico güvencesiyle tahsil edilmiştir. Bizi tercih ettiğiniz için teşekkür ederiz."
                 );
             }
             catch (Exception ex)
@@ -252,11 +293,13 @@ namespace ECommerce.Persistence.Services
 
         public async Task<ListOrder> GetAllOrdersAsync(int page, int size)
         {
-            var query = _orderReadRepository.Table.Include(o => o.Basket)
-                      .ThenInclude(b => b.User)
+            var query = _orderReadRepository.Table
                       .Include(o => o.Basket)
-                         .ThenInclude(b => b.BasketItems)
-                         .ThenInclude(bi => bi.Product);
+                          .ThenInclude(b => b.User)
+                      .Include(o => o.Basket)
+                          .ThenInclude(b => b.BasketItems)
+                          .ThenInclude(bi => bi.Product)
+                      .Include(o => o.OrderDiscounts);
 
             var data = query.OrderByDescending(o => o.CreatedDate).Skip(page * size).Take(size);
 
@@ -270,6 +313,7 @@ namespace ECommerce.Persistence.Services
                             CreatedDate = order.CreatedDate,
                             OrderCode = order.OrderCode,
                             Basket = order.Basket,
+                            OrderDiscounts = order.OrderDiscounts,
                             Completed = _co != null ? true : false,
                             Status = order.Status,
                             CargoCompany = order.CargoCompany,
@@ -284,13 +328,21 @@ namespace ECommerce.Persistence.Services
                     Id = o.Id,
                     CreatedDate = o.CreatedDate,
                     OrderCode = o.OrderCode,
-                    TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    BasePrice = (decimal)o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    TotalDiscount = o.OrderDiscounts.Sum(d => d.DiscountAmount),
+                    TotalPrice = (decimal)o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity) - o.OrderDiscounts.Sum(d => d.DiscountAmount),
                     OrderItems = o.Basket.BasketItems.Select(bi => new
                     {
                         ProductName = bi.Product.Name,
                         UnitPrice = bi.Product.Price,
                         Quantity = bi.Quantity,
                         TotalPrice = bi.Product.Price * bi.Quantity
+                    }),
+                    OrderDiscounts = o.OrderDiscounts.Select(d => new
+                    {
+                        d.DiscountName,
+                        d.DiscountType,
+                        d.DiscountAmount
                     }),
                     UserName = o.Basket.User.UserName,
                     o.Completed,
@@ -309,6 +361,7 @@ namespace ECommerce.Persistence.Services
                 .Include(o => o.Basket)
                     .ThenInclude(b => b.BasketItems)
                         .ThenInclude(bi => bi.Product)
+                .Include(o => o.OrderDiscounts)
                 .Where(o => o.Basket.UserId == userId);
 
             var totalCount = await query.CountAsync();
@@ -324,6 +377,7 @@ namespace ECommerce.Persistence.Services
                             CreatedDate = order.CreatedDate,
                             OrderCode = order.OrderCode,
                             Basket = order.Basket,
+                            OrderDiscounts = order.OrderDiscounts,
                             Completed = _co != null ? true : false,
                             Status = order.Status,
                             CargoCompany = order.CargoCompany,
@@ -338,13 +392,21 @@ namespace ECommerce.Persistence.Services
                     Id = o.Id,
                     CreatedDate = o.CreatedDate,
                     OrderCode = o.OrderCode,
-                    TotalPrice = o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    BasePrice = (decimal)o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity),
+                    TotalDiscount = o.OrderDiscounts.Sum(d => d.DiscountAmount),
+                    TotalPrice = (decimal)o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity) - o.OrderDiscounts.Sum(d => d.DiscountAmount),
                     OrderItems = o.Basket.BasketItems.Select(bi => new
                     {
                         ProductName = bi.Product.Name,
                         UnitPrice = bi.Product.Price,
                         Quantity = bi.Quantity,
                         TotalPrice = bi.Product.Price * bi.Quantity
+                    }).ToList(),
+                    OrderDiscounts = o.OrderDiscounts.Select(d => new
+                    {
+                        d.DiscountName,
+                        d.DiscountType,
+                        d.DiscountAmount
                     }).ToList(),
                     UserName = o.Basket.User.UserName,
                     o.Completed,
@@ -361,7 +423,8 @@ namespace ECommerce.Persistence.Services
             var data = _orderReadRepository.Table
                                  .Include(o => o.Basket)
                                      .ThenInclude(b => b.BasketItems)
-                                         .ThenInclude(bi => bi.Product);
+                                         .ThenInclude(bi => bi.Product)
+                                 .Include(o => o.OrderDiscounts);
 
             var data2 = await (from order in data
                                join completedOrder in _completedOrderReadRepository.Table
@@ -373,6 +436,7 @@ namespace ECommerce.Persistence.Services
                                    CreatedDate = order.CreatedDate,
                                    OrderCode = order.OrderCode,
                                    Basket = order.Basket,
+                                   OrderDiscounts = order.OrderDiscounts,
                                    Completed = _co != null ? true : false,
                                    Address = order.Address,
                                    Description = order.Description,
@@ -380,6 +444,9 @@ namespace ECommerce.Persistence.Services
                                    CargoCompany = order.CargoCompany,
                                    TrackingNumber = order.TrackingNumber
                                }).FirstOrDefaultAsync(o => o.Id == orderId);
+
+            var basePrice = data2.Basket.BasketItems.Sum(bi => (decimal)bi.Product.Price * bi.Quantity);
+            var totalDiscount = data2.OrderDiscounts?.Sum(d => d.DiscountAmount) ?? 0m;
 
             return new()
             {
@@ -397,7 +464,16 @@ namespace ECommerce.Persistence.Services
                 Completed = data2.Completed,
                 Status = data2.Status,
                 CargoCompany = data2.CargoCompany,
-                TrackingNumber = data2.TrackingNumber
+                TrackingNumber = data2.TrackingNumber,
+                BasePrice = basePrice,
+                TotalDiscount = totalDiscount,
+                TotalPrice = basePrice - totalDiscount,
+                OrderDiscounts = data2.OrderDiscounts?.Select(d => new SingleOrderDiscount
+                {
+                    DiscountName = d.DiscountName,
+                    DiscountType = d.DiscountType,
+                    DiscountAmount = d.DiscountAmount
+                }).ToList() ?? new()
             };
         }
 
@@ -494,5 +570,63 @@ namespace ECommerce.Persistence.Services
 
             return (succeeded, orderInfo);
         }
+
+        /// <summary>
+        /// Iyzico'ya gönderilecek ürün bazlı basket items listesini oluşturur.
+        /// Toplam indirim tutarı ürünlere ağırlıklarına göre oransal dağıtılır.
+        /// Kargo ücreti son ürüne eklenir.
+        /// </summary>
+        private static List<ECommerce.Application.Abstractions.Services.PaymentBasketItem> BuildPaymentBasketItems(
+            IEnumerable<ECommerce.Domain.Entities.BasketItem> basketItems,
+            ECommerce.Application.DTOs.Discount.CalculateDiscountResponse? discountResponse,
+            decimal finalTotalPrice,
+            string orderCode)
+        {
+            var items = basketItems.ToList();
+            if (!items.Any())
+            {
+                return new List<ECommerce.Application.Abstractions.Services.PaymentBasketItem>
+                {
+                    new() { Id = "BI" + orderCode, Name = "Basket Total", Category = "Shopping", Price = finalTotalPrice }
+                };
+            }
+
+            decimal originalTotal = items.Sum(bi => (decimal)bi.Product.Price * bi.Quantity);
+            decimal totalDiscount = discountResponse?.TotalDiscount ?? 0m;
+            decimal shippingFee = discountResponse?.ShippingFee ?? 50m;
+
+            var result = new List<ECommerce.Application.Abstractions.Services.PaymentBasketItem>();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                var bi = items[i];
+                decimal itemBase = (decimal)bi.Product.Price * bi.Quantity;
+
+                // Her ürüne oransal indirim dağıt
+                decimal itemDiscount = originalTotal > 0
+                    ? Math.Round(totalDiscount * (itemBase / originalTotal), 2)
+                    : 0m;
+
+                decimal itemNetPrice = itemBase - itemDiscount;
+
+                // Son ürüne kargo ücretini ekle
+                if (i == items.Count - 1)
+                    itemNetPrice += shippingFee;
+
+                if (itemNetPrice < 0.01m)
+                    itemNetPrice = 0.01m;
+
+                result.Add(new ECommerce.Application.Abstractions.Services.PaymentBasketItem
+                {
+                    Id = $"BI{orderCode}-{i}",
+                    Name = bi.Product.Name.Length > 60 ? bi.Product.Name[..60] : bi.Product.Name,
+                    Category = bi.Product.Category?.Name ?? "Genel",
+                    Price = itemNetPrice
+                });
+            }
+
+            return result;
+        }
     }
 }
+

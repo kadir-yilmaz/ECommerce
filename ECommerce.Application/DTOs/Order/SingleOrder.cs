@@ -12,5 +12,33 @@ namespace ECommerce.Application.DTOs.Order
         public int Status { get; set; }
         public string? CargoCompany { get; set; }
         public string? TrackingNumber { get; set; }
+
+        /// <summary>
+        /// Ham ürün toplamı (indirimler uygulanmadan)
+        /// </summary>
+        public decimal BasePrice { get; set; }
+
+        /// <summary>
+        /// Toplam indirim tutarı
+        /// </summary>
+        public decimal TotalDiscount { get; set; }
+
+        /// <summary>
+        /// Ödenecek net tutar (BasePrice - TotalDiscount)
+        /// </summary>
+        public decimal TotalPrice { get; set; }
+
+        /// <summary>
+        /// Uygulanmış indirim detayları (kampanya, kupon vb.)
+        /// </summary>
+        public List<SingleOrderDiscount> OrderDiscounts { get; set; } = new();
+    }
+
+    public class SingleOrderDiscount
+    {
+        public string DiscountName { get; set; }
+        public string DiscountType { get; set; }
+        public decimal DiscountAmount { get; set; }
     }
 }
+

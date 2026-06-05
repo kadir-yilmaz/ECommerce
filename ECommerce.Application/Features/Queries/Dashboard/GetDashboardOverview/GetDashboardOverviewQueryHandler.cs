@@ -38,6 +38,7 @@ namespace ECommerce.Application.Features.Queries.Dashboard.GetDashboardOverview
                 .Include(o => o.Basket)
                 .ThenInclude(b => b.BasketItems)
                 .ThenInclude(bi => bi.Product)
+                .Include(o => o.OrderDiscounts)
                 .ToListAsync(cancellationToken);
 
             decimal totalSales = 0;
@@ -45,9 +46,12 @@ namespace ECommerce.Application.Features.Queries.Dashboard.GetDashboardOverview
             {
                 if (order.Basket != null && order.Basket.BasketItems != null)
                 {
-                    totalSales += order.Basket.BasketItems.Sum(bi => (decimal)(bi.Product.Price * bi.Quantity));
+                    var basePrice = order.Basket.BasketItems.Sum(bi => (decimal)(bi.Product.Price * bi.Quantity));
+                    var totalDiscount = order.OrderDiscounts?.Sum(d => d.DiscountAmount) ?? 0m;
+                    totalSales += basePrice - totalDiscount;
                 }
             }
+
 
             return new GetDashboardOverviewQueryResponse
             {
