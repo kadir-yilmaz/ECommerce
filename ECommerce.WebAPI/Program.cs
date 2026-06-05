@@ -174,6 +174,8 @@ try
 
         await DataSeeder.SeedCategoriesAsync(context);
         await DataSeeder.SeedProductsAsync(context);
+        await DataSeeder.SeedCampaignsAsync(context);
+        await DataSeeder.SeedCouponsAndRewardsAsync(context);
         await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context, adminEmail, adminPassword);
     }
 }
