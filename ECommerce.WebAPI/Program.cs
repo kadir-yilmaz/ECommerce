@@ -95,6 +95,17 @@ var app = builder.Build();
 
 app.UseDeveloperExceptionPage();
 
+Exception? startupException = null;
+
+app.Use(async (context, next) =>
+{
+    if (startupException != null)
+    {
+        throw new Exception("Application failed to start due to a database migration or seeding exception.", startupException);
+    }
+    await next();
+});
+
 app.ConfigureExceptionHandler<Program>(app.Services.GetRequiredService<ILogger<Program>>());
 
 // Configure the HTTP request pipeline.
@@ -148,20 +159,29 @@ app.MapHub<OrderHub>("/orders-hub");
 app.MapHub<CouponHub>("/coupons-hub");
 
 // Seed data - DB boşsa 10 ürün ekle
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
-    var adminEmail = app.Configuration["AdminUser:Email"];
-    var adminPassword = app.Configuration["AdminUser:Password"];
+        var adminEmail = app.Configuration["AdminUser:Email"];
+        var adminPassword = app.Configuration["AdminUser:Password"];
 
-    await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync();
 
-    await DataSeeder.SeedCategoriesAsync(context);
-    await DataSeeder.SeedProductsAsync(context);
-    await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context, adminEmail, adminPassword);
+        await DataSeeder.SeedCategoriesAsync(context);
+        await DataSeeder.SeedProductsAsync(context);
+        await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context, adminEmail, adminPassword);
+    }
+}
+catch (Exception ex)
+{
+    startupException = ex;
+    Log.Fatal(ex, "Database migration/seeding failed at startup.");
+    Log.CloseAndFlush();
 }
 
 app.Run();
