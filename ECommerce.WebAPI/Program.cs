@@ -93,6 +93,8 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+app.UseDeveloperExceptionPage();
+
 app.ConfigureExceptionHandler<Program>(app.Services.GetRequiredService<ILogger<Program>>());
 
 // Configure the HTTP request pipeline.
