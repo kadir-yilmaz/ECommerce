@@ -15,11 +15,10 @@ namespace ECommerce.Persistence
             {
                 { "Elektronik", new List<string> { "Telefon", "Laptop", "Kulaklık", "Mouse", "Klavye" } },
                 { "Kozmetik", new List<string> { "Parfüm", "Ruj", "Cilt Bakım" } },
-                { "Ayakkabı", new List<string> { "Spor", "Gündelik", "Topuklu" } },
-                { "Kadın", new List<string> { "Giyim", "Aksesuar & Çanta", "Takı" } },
-                { "Erkek", new List<string> { "Giyim", "Saat", "Cüzdan" } },
                 { "Süpermarket", new List<string> { "Gıda", "Temizlik", "Kişisel Bakım" } },
-                { "Spor & Outdoor", new List<string> { "Fitness", "Kamp", "Bisiklet" } }
+                { "Spor & Outdoor", new List<string> { "Fitness", "Kamp", "Bisiklet" } },
+                { "Kadın", new List<string> { "Giyim", "Aksesuar & Çanta", "Takı", "Ayakkabı", "Gözlük", "Parfüm" } },
+                { "Erkek", new List<string> { "Giyim", "Saat", "Cüzdan", "Ayakkabı", "Gözlük", "Parfüm" } }
             };
 
             foreach (var kvp in categoriesTree)
@@ -91,49 +90,6 @@ namespace ECommerce.Persistence
                     ("Estee Lauder Advanced Night Repair", 3500f) 
                 }},
 
-                { "Spor", new List<(string, float)> { 
-                    ("Nike Air Zoom Pegasus 40", 4500f), ("Adidas Ultraboost Light", 6000f), 
-                    ("Puma Deviate Nitro 2", 5200f), ("Under Armour HOVR", 4800f), 
-                    ("Asics Gel-Kayano 30", 6500f) 
-                }},
-                { "Gündelik", new List<(string, float)> { 
-                    ("Nike Air Force 1 '07", 4200f), ("Vans Old Skool Siyah", 2500f), 
-                    ("Converse Chuck Taylor All Star", 2800f), ("Adidas Stan Smith", 3800f), 
-                    ("New Balance 550", 4500f) 
-                }},
-                { "Topuklu", new List<(string, float)> { 
-                    ("Derimod Siyah Stiletto", 1800f), ("Aldo Platform Topuklu", 2600f), 
-                    ("Nine West Nude Topuklu", 2200f), ("Kemal Tanca Deri Abiye Ayakkabı", 3200f), 
-                    ("Elle İnce Bantlı Topuklu", 1950f) 
-                }},
-
-                { "Giyim", new List<(string, float)> { 
-                    ("Basic Tişört", 350f), ("Kot Pantolon", 850f), 
-                    ("Keten Gömlek", 600f), ("Mevsimlik Mont", 1500f), 
-                    ("Spor Ceket", 1200f) 
-                }},
-                { "Aksesuar & Çanta", new List<(string, float)> { 
-                    ("Guess Siyah Çapraz Çanta", 3800f), ("Vakko Monogram Omuz Çantası", 8500f), 
-                    ("Beymen Club Keten Çanta", 2500f), ("Mango Deri Kemer", 450f), 
-                    ("Zara Portföy Cüzdan", 650f) 
-                }},
-                { "Takı", new List<(string, float)> { 
-                    ("Pandora Moments Gümüş Bileklik", 2800f), ("Atasay 14 Ayar Altın Kolye", 7500f), 
-                    ("Zen Pırlanta Tektaş Yüzük", 35000f), ("Swarovski Iconic Swan Küpe", 3200f), 
-                    ("So Chic Çelik Halhal", 550f) 
-                }},
-
-                { "Saat", new List<(string, float)> { 
-                    ("Seiko 5 Sports Automatic", 12000f), ("Tissot PRX Powermatic 80", 25000f), 
-                    ("Casio G-Shock", 4500f), ("Fossil Gen 6 Smartwatch", 7500f), 
-                    ("Tommy Hilfiger Deri Kordon Saat", 4200f) 
-                }},
-                { "Cüzdan", new List<(string, float)> { 
-                    ("Kemal Tanca Hakiki Deri Cüzdan", 1400f), ("Derimod Siyah Kartlık", 650f), 
-                    ("Tommy Hilfiger Erkek Cüzdan", 2100f), ("Vakko Logo Baskılı Deri Cüzdan", 2800f), 
-                    ("Pierre Cardin Deri Kartlık", 950f) 
-                }},
-
                 { "Gıda", new List<(string, float)> { 
                     ("Torku Toz Şeker 5 kg", 160f), ("Çaykur Rize Turist Çayı 1 kg", 155f), 
                     ("Yudum Ayçiçek Yağı 5 lt", 240f), ("Nutella Kakaolu Krem Çikolata 750g", 145f), 
@@ -164,6 +120,74 @@ namespace ECommerce.Persistence
                     ("Kron XC100 29 Jant Dağ Bisikleti", 9500f), ("Bianchi Touring Şehir Bisikleti", 10500f), 
                     ("Salcano Hector 26 Jant Dağ Bisikleti", 7500f), ("Bisan Katlanabilir Bisiklet", 8200f), 
                     ("Shimano Profesyonel Bisiklet Kaskı", 1400f) 
+                }},
+
+                // Kadın Kategorileri
+                { "Kadın Giyim", new List<(string, float)> { 
+                    ("Kadın Basic Tişört", 350f), ("Kadın Kot Pantolon", 850f), 
+                    ("Kadın Keten Gömlek", 600f), ("Kadın Mevsimlik Mont", 1500f), 
+                    ("Kadın Spor Ceket", 1200f) 
+                }},
+                { "Kadın Aksesuar & Çanta", new List<(string, float)> { 
+                    ("Guess Siyah Çapraz Çanta", 3800f), ("Vakko Monogram Omuz Çantası", 8500f), 
+                    ("Beymen Club Keten Çanta", 2500f), ("Mango Deri Kemer", 450f), 
+                    ("Zara Portföy Cüzdan", 650f) 
+                }},
+                { "Kadın Takı", new List<(string, float)> { 
+                    ("Pandora Moments Gümüş Bileklik", 2800f), ("Atasay 14 Ayar Altın Kolye", 7500f), 
+                    ("Zen Pırlanta Tektaş Yüzük", 35000f), ("Swarovski Iconic Swan Küpe", 3200f), 
+                    ("So Chic Çelik Halhal", 550f) 
+                }},
+                { "Kadın Ayakkabı", new List<(string, float)> { 
+                    ("Nike Air Zoom Pegasus 40", 4500f), ("Adidas Ultraboost Light", 6000f), 
+                    ("Nike Air Force 1 '07", 4200f), ("Vans Old Skool Siyah", 2500f), 
+                    ("Derimod Siyah Stiletto", 1800f), ("Aldo Platform Topuklu", 2600f), 
+                    ("Nine West Nude Topuklu", 2200f), ("Kemal Tanca Deri Abiye Ayakkabı", 3200f), 
+                    ("Elle İnce Bantlı Topuklu", 1950f) 
+                }},
+                { "Kadın Gözlük", new List<(string, float)> { 
+                    ("Ray-Ban Wayfarer Kadın", 3500f), ("Tom Ford Jennifer TF8", 6500f), 
+                    ("Gucci Kadın Gözlük", 7200f), ("Dior DiorSoStellaire1 Kadın", 5800f), 
+                    ("Oakley Frogskins Kadın", 2800f) 
+                }},
+                { "Kadın Parfüm", new List<(string, float)> { 
+                    ("Chanel No5 100ml", 9500f), ("Dior Miss Dior Eau de Parfum 100ml", 7500f), 
+                    ("Lancôme La Vie Est Belle 100ml", 6800f), ("Marc Jacobs Daisy 100ml", 5200f), 
+                    ("Yves Saint Laurent Mon Paris 100ml", 6800f) 
+                }},
+
+                // Erkek Kategorileri
+                { "Erkek Giyim", new List<(string, float)> { 
+                    ("Erkek Basic Tişört", 350f), ("Erkek Kot Pantolon", 850f), 
+                    ("Erkek Keten Gömlek", 600f), ("Erkek Mevsimlik Mont", 1500f), 
+                    ("Erkek Spor Ceket", 1200f) 
+                }},
+                { "Erkek Saat", new List<(string, float)> { 
+                    ("Seiko 5 Sports Automatic", 12000f), ("Tissot PRX Powermatic 80", 25000f), 
+                    ("Casio G-Shock", 4500f), ("Fossil Gen 6 Smartwatch", 7500f), 
+                    ("Tommy Hilfiger Deri Kordon Saat", 4200f) 
+                }},
+                { "Erkek Cüzdan", new List<(string, float)> { 
+                    ("Kemal Tanca Hakiki Deri Cüzdan", 1400f), ("Derimod Siyah Kartlık", 650f), 
+                    ("Tommy Hilfiger Erkek Cüzdan", 2100f), ("Vakko Logo Baskılı Deri Cüzdan", 2800f), 
+                    ("Pierre Cardin Deri Kartlık", 950f) 
+                }},
+                { "Erkek Ayakkabı", new List<(string, float)> { 
+                    ("Nike Air Zoom Pegasus 40", 4500f), ("Adidas Ultraboost Light", 6000f), 
+                    ("Puma Deviate Nitro 2", 5200f), ("Under Armour HOVR", 4800f), 
+                    ("Asics Gel-Kayano 30", 6500f), ("Nike Air Force 1 '07", 4200f), 
+                    ("Converse Chuck Taylor All Star", 2800f), ("Adidas Stan Smith", 3800f), 
+                    ("New Balance 550", 4500f) 
+                }},
+                { "Erkek Gözlük", new List<(string, float)> { 
+                    ("Ray-Ban Clubmaster Erkek", 3800f), ("Tom Ford James Bond", 6800f), 
+                    ("Gucci Erkek Gözlük", 7500f), ("Dior Homme Erkek", 6200f), 
+                    ("Oakley Holbrook Erkek", 3200f) 
+                }},
+                { "Erkek Parfüm", new List<(string, float)> { 
+                    ("Dior Sauvage Eau de Toilette 100ml", 7000f), ("Versace Eros 100ml", 6200f), 
+                    ("Hugo Boss Bottled 100ml", 5500f), ("Acqua di Gio 100ml", 5800f), 
+                    ("Bleu de Chanel 100ml", 7500f) 
                 }}
             };
 
@@ -183,12 +207,6 @@ namespace ECommerce.Persistence
                             Stock = random.Next(10, 200),
                             CategoryId = category.Id
                         };
-                        
-                        if (lookupName == "Giyim")
-                        {
-                            var parent = await context.Categories.FindAsync(category.ParentCategoryId);
-                            product.Name = $"{parent?.Name} {pd.Name}";
-                        }
                         
                         productsToSeed.Add(product);
                     }
