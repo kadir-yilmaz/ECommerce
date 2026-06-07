@@ -28,6 +28,7 @@ namespace ECommerce.Persistence.Contexts
         public DbSet<OrderDiscount> OrderDiscounts { get; set; }
         public DbSet<UserCoupon> UserCoupons { get; set; }
         public DbSet<RewardRule> RewardRules { get; set; }
+        public DbSet<Address> Addresses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -141,6 +142,16 @@ namespace ECommerce.Persistence.Contexts
             builder.Entity<RewardRule>()
                 .Property(r => r.CouponMinCartAmount)
                 .HasColumnType("decimal(18, 2)");
+
+            // Address configuration
+            builder.Entity<Address>()
+                .HasOne(a => a.User)
+                .WithMany(u => u.Addresses)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Address>()
+                .HasIndex(a => new { a.UserId, a.AddressType, a.IsDefault });
 
             base.OnModelCreating(builder);
         }

@@ -13,5 +13,6 @@ namespace ECommerce.Application.Consts
         public const string ProductImageFiles = "Product Image Files";
         public const string ProductImages = "Product Images";
         public const string RewardRules = "Reward Rules";
+        public const string Addresses = "Addresses";
     }
 }

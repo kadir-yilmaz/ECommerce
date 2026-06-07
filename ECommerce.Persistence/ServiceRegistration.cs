@@ -71,6 +71,9 @@ namespace ECommerce.Persistence
             services.AddScoped<ECommerce.Application.Repositories.RewardRule.IRewardRuleReadRepository, ECommerce.Persistence.Repositories.RewardRuleReadRepository>();
             services.AddScoped<ECommerce.Application.Repositories.RewardRule.IRewardRuleWriteRepository, ECommerce.Persistence.Repositories.RewardRuleWriteRepository>();
 
+            services.AddScoped<IAddressReadRepository, AddressReadRepository>();
+            services.AddScoped<IAddressWriteRepository, AddressWriteRepository>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IExternalAuthentication, AuthService>();
@@ -81,6 +84,7 @@ namespace ECommerce.Persistence
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IAddressService, AddressService>();
         }
     }
 }
