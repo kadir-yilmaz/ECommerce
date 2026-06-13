@@ -9,7 +9,7 @@ namespace ECommerce.Persistence
         public ECommerceDbContext CreateDbContext(string[] args)
         {
             DbContextOptionsBuilder<ECommerceDbContext> dbContextOptionsBuilder = new();
-            dbContextOptionsBuilder.UseSqlServer(Configuration.ConnectionString);
+            dbContextOptionsBuilder.UseNpgsql(Configuration.ConnectionString);
             return new(dbContextOptionsBuilder.Options);
         }
     }
