@@ -397,6 +397,7 @@ namespace ECommerce.Persistence.Services
                     TotalPrice = (decimal)o.Basket.BasketItems.Sum(bi => bi.Product.Price * bi.Quantity) - o.OrderDiscounts.Sum(d => d.DiscountAmount),
                     OrderItems = o.Basket.BasketItems.Select(bi => new
                     {
+                        ProductId = bi.ProductId.ToString(),
                         ProductName = bi.Product.Name,
                         UnitPrice = bi.Product.Price,
                         Quantity = bi.Quantity,
@@ -453,6 +454,7 @@ namespace ECommerce.Persistence.Services
                 Id = data2.Id.ToString(),
                 BasketItems = data2.Basket.BasketItems.Select(bi => new
                 {
+                    ProductId = bi.ProductId.ToString(),
                     bi.Product.Name,
                     bi.Product.Price,
                     bi.Quantity

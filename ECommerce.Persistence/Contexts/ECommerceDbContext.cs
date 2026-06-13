@@ -29,6 +29,8 @@ namespace ECommerce.Persistence.Contexts
         public DbSet<UserCoupon> UserCoupons { get; set; }
         public DbSet<RewardRule> RewardRules { get; set; }
         public DbSet<Address> Addresses { get; set; }
+        public DbSet<ProductReview> ProductReviews { get; set; }
+        public DbSet<ProductReviewReaction> ProductReviewReactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -152,6 +154,46 @@ namespace ECommerce.Persistence.Contexts
 
             builder.Entity<Address>()
                 .HasIndex(a => new { a.UserId, a.AddressType, a.IsDefault });
+
+            // ProductReview configuration
+            builder.Entity<ProductReview>()
+                .HasOne(r => r.Product)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(r => r.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ProductReview>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.Reviews)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Aynı kullanıcı, aynı ürüne yalnızca 1 aktif yorum (soft delete'li unique index)
+            builder.Entity<ProductReview>()
+                .HasIndex(r => new { r.ProductId, r.UserId })
+                .HasFilter("[IsDeleted] = 0")
+                .IsUnique();
+
+            // Soft delete global query filter
+            builder.Entity<ProductReview>()
+                .HasQueryFilter(r => !r.IsDeleted);
+
+            // ProductReviewReaction configuration
+            builder.Entity<ProductReviewReaction>()
+                .HasOne(r => r.Review)
+                .WithMany()
+                .HasForeignKey(r => r.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ProductReviewReaction>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProductReviewReaction>()
+                .HasIndex(r => new { r.ReviewId, r.UserId })
+                .IsUnique();
 
             base.OnModelCreating(builder);
         }

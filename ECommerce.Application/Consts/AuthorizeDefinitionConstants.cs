@@ -14,5 +14,6 @@ namespace ECommerce.Application.Consts
         public const string ProductImages = "Product Images";
         public const string RewardRules = "Reward Rules";
         public const string Addresses = "Addresses";
+        public const string ProductReviews = "Product Reviews";
     }
 }

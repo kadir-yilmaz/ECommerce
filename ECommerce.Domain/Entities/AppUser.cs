@@ -15,6 +15,7 @@ namespace ECommerce.Domain.Entities
         public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
         public ICollection<UserCoupon> UserCoupons { get; set; } = new List<UserCoupon>();
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
+        public ICollection<ProductReview> Reviews { get; set; } = new List<ProductReview>();
     }
 }
 

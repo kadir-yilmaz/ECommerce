@@ -49,6 +49,8 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
                 ShowOnHomepage = product.ShowOnHomepage,
                 CategoryId = product.CategoryId,
                 Brand = product.Brand,
+                AverageRating = product.AverageRating,
+                ReviewCount = product.ReviewCount,
                 Campaigns = activeCampaigns,
                 ImagePath = product.ProductImageFiles?.FirstOrDefault(p => p.Showcase)?.Path 
                             ?? product.ProductImageFiles?.FirstOrDefault()?.Path,

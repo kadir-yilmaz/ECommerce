@@ -29,7 +29,14 @@ namespace ECommerce.Application.Features.Queries.Order.GetOrderById
                 CreatedDate = data.CreatedDate,
                 Description = data.Description,
                 OrderCode = data.OrderCode,
-                Completed = data.Completed
+                Completed = data.Completed,
+                Status = data.Status,
+                CargoCompany = data.CargoCompany,
+                TrackingNumber = data.TrackingNumber,
+                BasePrice = data.BasePrice,
+                TotalDiscount = data.TotalDiscount,
+                TotalPrice = data.TotalPrice,
+                OrderDiscounts = data.OrderDiscounts
             };
         }
     }

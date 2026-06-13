@@ -4,9 +4,11 @@ using ECommerce.Application.DTOs;
 using ECommerce.Application.Exceptions;
 using ECommerce.Application.Helpers;
 using ECommerce.Domain.Entities;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Text;
 
 namespace ECommerce.Persistence.Services
@@ -20,6 +22,7 @@ namespace ECommerce.Persistence.Services
         readonly IMailService _mailService;
         readonly IHttpContextAccessor _httpContextAccessor;
         readonly ECommerce.Persistence.Contexts.ECommerceDbContext _context;
+        readonly IConfiguration _configuration;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -28,7 +31,8 @@ namespace ECommerce.Persistence.Services
             IUserService userService,
             IMailService mailService,
             IHttpContextAccessor httpContextAccessor,
-            ECommerce.Persistence.Contexts.ECommerceDbContext context)
+            ECommerce.Persistence.Contexts.ECommerceDbContext context,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _tokenHandler = tokenHandler;
@@ -37,6 +41,7 @@ namespace ECommerce.Persistence.Services
             _mailService = mailService;
             _httpContextAccessor = httpContextAccessor;
             _context = context;
+            _configuration = configuration;
         }
 
         public async Task<Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
@@ -105,7 +110,57 @@ namespace ECommerce.Persistence.Services
 
         public async Task<Token> GoogleLoginAsync(string idToken, int accessTokenLifeTime)
         {
-            throw new NotImplementedException();
+            var settings = new GoogleJsonWebSignature.ValidationSettings()
+            {
+                Audience = new List<string> { _configuration["ExternalLoginSettings:Google:ClientId"] }
+            };
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+
+            var info = new UserLoginInfo("GOOGLE", payload.Subject, "GOOGLE");
+
+            AppUser? user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+
+            bool result = user != null;
+
+            if (user == null)
+            {
+                user = await _userManager.FindByEmailAsync(payload.Email);
+                if (user == null)
+                {
+                    user = new()
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        Email = payload.Email,
+                        UserName = payload.Email,
+                        NameSurname = payload.Name
+                    };
+                    var identityResult = await _userManager.CreateAsync(user);
+                    result = identityResult.Succeeded;
+                }
+                else
+                {
+                    result = true;
+                }
+            }
+
+            if (result)
+            {
+                // Check if this login is already added to user, if not add it
+                var logins = await _userManager.GetLoginsAsync(user);
+                if (!logins.Any(l => l.LoginProvider == info.LoginProvider && l.ProviderKey == info.ProviderKey))
+                {
+                    await _userManager.AddLoginAsync(user, info);
+                }
+
+                var roles = await _userManager.GetRolesAsync(user);
+                Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user, roles);
+                await _userService.UpdateRefreshTokenAsync(token.RefreshToken, user, token.Expiration, 7);
+                SetRefreshTokenCookie(token.RefreshToken, DateTime.UtcNow.AddDays(7));
+                return token;
+            }
+
+            throw new Exception("Invalid external authentication.");
         }
 
         public async Task PasswordResetAsnyc(string email)

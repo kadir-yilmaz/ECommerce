@@ -9,6 +9,8 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
         public bool ShowOnHomepage { get; set; }
         public System.Guid? CategoryId { get; set; }
         public string Brand { get; set; }
+        public float AverageRating { get; set; }
+        public int ReviewCount { get; set; }
         public System.Collections.Generic.List<ECommerce.Application.DTOs.Product.ProductCampaignDto> Campaigns { get; set; }
         public string? ImagePath { get; set; }
         public System.Collections.Generic.List<GetByIdProductImageResponse> ProductImageFiles { get; set; }

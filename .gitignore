@@ -55,3 +55,6 @@ seq-data/
 
 # Seed Data
 seed-sql/
+
+# Content Moderation Rules
+ECommerce.Persistence/Data/

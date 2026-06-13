@@ -104,6 +104,8 @@ namespace ECommerce.Application.Features.Queries.Product.GetAllProduct
                     pif.Showcase
                 }).ToList(),
                 p.CategoryId,
+                p.AverageRating,
+                p.ReviewCount,
                 Campaigns = activeCampaigns.Where(c => 
                     (c.ProductId != null && (
                         (Guid.TryParse(c.ProductId, out var prodId) && prodId == p.Id) ||

@@ -74,6 +74,12 @@ namespace ECommerce.Persistence
             services.AddScoped<IAddressReadRepository, AddressReadRepository>();
             services.AddScoped<IAddressWriteRepository, AddressWriteRepository>();
 
+            services.AddScoped<ECommerce.Application.Repositories.ProductReview.IProductReviewReadRepository, ECommerce.Persistence.Repositories.ProductReview.ProductReviewReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.ProductReview.IProductReviewWriteRepository, ECommerce.Persistence.Repositories.ProductReview.ProductReviewWriteRepository>();
+
+            services.AddScoped<ECommerce.Application.Repositories.ProductReviewReaction.IProductReviewReactionReadRepository, ECommerce.Persistence.Repositories.ProductReviewReaction.ProductReviewReactionReadRepository>();
+            services.AddScoped<ECommerce.Application.Repositories.ProductReviewReaction.IProductReviewReactionWriteRepository, ECommerce.Persistence.Repositories.ProductReviewReaction.ProductReviewReactionWriteRepository>();
+
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IExternalAuthentication, AuthService>();
@@ -85,6 +91,7 @@ namespace ECommerce.Persistence
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<IContentModerationService, ContentModerationService>();
         }
     }
 }
