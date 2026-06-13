@@ -61,7 +61,6 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
         var host = new Uri(origin).Host;
         return host == "localhost"
             || host == "kadir.infinityfreeapp.com"
-            || host == "kadir.tryasp.net"
             || host.EndsWith(".trycloudflare.com")
             || host.EndsWith(".sslip.io")
             || host == "kadiryilmaz.online"
