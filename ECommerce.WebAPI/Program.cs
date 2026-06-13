@@ -62,7 +62,10 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
         return host == "localhost"
             || host == "kadir.infinityfreeapp.com"
             || host == "kadir.tryasp.net"
-            || host.EndsWith(".trycloudflare.com");
+            || host.EndsWith(".trycloudflare.com")
+            || host.EndsWith(".sslip.io")
+            || host == "kadiryilmaz.online"
+            || host.EndsWith(".kadiryilmaz.online");
     })
           .AllowAnyHeader()
           .AllowAnyMethod()
