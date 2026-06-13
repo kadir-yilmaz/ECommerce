@@ -1,6 +1,6 @@
 {
   "Serilog": {
-    "Using": [ "Serilog.Expressions", "Serilog.Sinks.Console", "Serilog.Sinks.File", "Serilog.Sinks.MSSqlServer", "Serilog.Sinks.Seq" ],
+    "Using": [ "Serilog.Expressions", "Serilog.Sinks.Console", "Serilog.Sinks.File", "Serilog.Sinks.Seq" ],
     "MinimumLevel": {
       "Default": "Information",
       "Override": {
@@ -28,28 +28,7 @@
           "serverUrl": "http://localhost:5341"
         }
       },
-      {
-        "Name": "MSSqlServer",
-        "Args": {
-          "connectionString": "sqlConnection",
-          "sinkOptionsSection": {
-            "tableName": "Logs",
-            "autoCreateSqlTable": true
-          },
-          "columnOptionsSection": {
-            "removeStandardColumns": [ "MessageTemplate" ],
-            "addStandardColumns": [ "LogEvent" ],
-            "customColumns": [
-              {
-                "ColumnName": "user_name",
-                "DataType": "NVarChar",
-                "DataLength": 50,
-                "AllowNull": true
-              }
-            ]
-          }
-        }
-      },
+
       {
         "Name": "Conditional",
         "Args": {
