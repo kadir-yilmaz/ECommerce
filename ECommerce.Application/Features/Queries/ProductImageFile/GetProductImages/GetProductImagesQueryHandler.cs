@@ -18,7 +18,9 @@ namespace ECommerce.Application.Features.Queries.ProductImageFile.GetProductImag
 
         public async Task<List<GetProductImagesQueryResponse>> Handle(GetProductImagesQueryRequest request, CancellationToken cancellationToken)
         {
-            Domain.Entities.Product? product = await _productReadRepository.Table.Include(p => p.ProductImageFiles)
+            Domain.Entities.Product? product = await _productReadRepository.Table
+                   .AsNoTracking()
+                   .Include(p => p.ProductImageFiles)
                    .FirstOrDefaultAsync(p => p.Id == Guid.Parse(request.Id));
             return product?.ProductImageFiles.Select(p => new GetProductImagesQueryResponse
             {

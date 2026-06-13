@@ -31,6 +31,7 @@ namespace ECommerce.Application.Features.Queries.ProductReview.GetUserReviews
                 throw new UnauthorizedAccessException("Kullanıcı kimliği bulunamadı.");
 
             var reviews = await _reviewReadRepository.Table
+                .AsNoTracking()
                 .IgnoreQueryFilters() // Soft-deleted (IsDeleted = true) olanları da çekmek için
                 .Where(r => r.UserId == userId)
                 .Include(r => r.Product)

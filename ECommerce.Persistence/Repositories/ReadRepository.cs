@@ -34,14 +34,14 @@ namespace ECommerce.Persistence.Repositories
         {
             var query = Table.AsQueryable();
             if (!tracking)
-                query = Table.AsNoTracking();
+                query = query.AsNoTracking();
             return await query.FirstOrDefaultAsync(method);
         }
         public async Task<T> GetByIdAsync(string id, bool tracking = true)
         {
             var query = Table.AsQueryable();
             if (!tracking)
-                query = Table.AsNoTracking();
+                query = query.AsNoTracking();
             Guid idGuid = Guid.Parse(id);
             return await query.FirstOrDefaultAsync(data => data.Id == idGuid);
         }

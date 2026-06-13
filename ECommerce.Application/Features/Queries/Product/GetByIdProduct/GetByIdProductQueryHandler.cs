@@ -21,6 +21,7 @@ namespace ECommerce.Application.Features.Queries.Product.GetByIdProduct
         {
             Guid productGuid = Guid.Parse(request.Id);
             P.Product product = await _productReadRepository.Table
+                .AsNoTracking()
                 .Include(p => p.ProductImageFiles)
                 .FirstOrDefaultAsync(p => p.Id == productGuid, cancellationToken);
                 
