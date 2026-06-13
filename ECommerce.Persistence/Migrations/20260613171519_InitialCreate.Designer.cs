@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ECommerce.Persistence.Migrations
 {
     [DbContext(typeof(ECommerceDbContext))]
-    [Migration("20260613162655_InitialCreate")]
+    [Migration("20260613171519_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -761,7 +761,7 @@ namespace ECommerce.Persistence.Migrations
 
                     b.HasIndex("ProductId", "UserId")
                         .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("ProductReviews");
                 });

@@ -837,7 +837,7 @@ namespace ECommerce.Persistence.Migrations
                 table: "ProductReviews",
                 columns: new[] { "ProductId", "UserId" },
                 unique: true,
-                filter: "[IsDeleted] = 0");
+                filter: "\"IsDeleted\" = false");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ProductReviews_UserId",

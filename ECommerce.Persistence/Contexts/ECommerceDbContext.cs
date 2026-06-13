@@ -171,7 +171,7 @@ namespace ECommerce.Persistence.Contexts
             // Aynı kullanıcı, aynı ürüne yalnızca 1 aktif yorum (soft delete'li unique index)
             builder.Entity<ProductReview>()
                 .HasIndex(r => new { r.ProductId, r.UserId })
-                .HasFilter("[IsDeleted] = 0")
+                .HasFilter("\"IsDeleted\" = false")
                 .IsUnique();
 
             // Soft delete global query filter

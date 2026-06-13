@@ -758,7 +758,7 @@ namespace ECommerce.Persistence.Migrations
 
                     b.HasIndex("ProductId", "UserId")
                         .IsUnique()
-                        .HasFilter("[IsDeleted] = 0");
+                        .HasFilter("\"IsDeleted\" = false");
 
                     b.ToTable("ProductReviews");
                 });
