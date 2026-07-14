@@ -44,6 +44,8 @@ namespace ECommerce.Persistence
                     configurationManager.AddJsonFile($"appsettings.{environmentName}.json", optional: true);
                 }
 
+                configurationManager.AddEnvironmentVariables();
+
                 return configurationManager.GetConnectionString("sqlConnection");
             }
         }
