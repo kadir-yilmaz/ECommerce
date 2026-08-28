@@ -52,7 +52,7 @@ namespace ECommerce.Infrastructure.Services.Storage.Local
         public async Task<List<(string fileName, string pathOrContainerName)>> UploadAsync(string path, IFormFileCollection files, string? productName = null)
         {
             string webRootPath = _webHostEnvironment.WebRootPath ?? Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
-            string uploadPath = Path.Combine(webRootPath, path);
+            string uploadPath = Path.Combine(webRootPath, path.Replace('/', Path.DirectorySeparatorChar));
             if (!Directory.Exists(uploadPath))
                 Directory.CreateDirectory(uploadPath);
 
@@ -68,8 +68,11 @@ namespace ECommerce.Infrastructure.Services.Storage.Local
                 }
                 string fileNewName = await FileRenameAsync(path, baseName, HasFile);
 
-                await CopyFileAsync($"{uploadPath}\\{fileNewName}", file);
-                datas.Add((fileNewName, $"{path}\\{fileNewName}"));
+                string destPath = Path.Combine(uploadPath, fileNewName);
+                await CopyFileAsync(destPath, file);
+                
+                string relativePath = $"{path.Replace('\\', '/').Trim('/')}/{fileNewName}";
+                datas.Add((fileNewName, relativePath));
             }
 
             return datas;

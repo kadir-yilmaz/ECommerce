@@ -40,7 +40,14 @@ builder.Services.AddPersistenceServices();
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices();
 builder.Services.AddSignalRServices();
-builder.Services.AddStorage<ECommerce.Infrastructure.Services.Storage.Minio.MinioStorage>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddStorage<ECommerce.Infrastructure.Services.Storage.Local.LocalStorage>();
+}
+else
+{
+    builder.Services.AddStorage<ECommerce.Infrastructure.Services.Storage.Minio.MinioStorage>();
+}
 
 builder.Services.AddControllers(options =>
 {

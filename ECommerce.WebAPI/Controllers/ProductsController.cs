@@ -105,10 +105,13 @@ namespace ECommerce.WebAPI.Controllers
         [HttpDelete("[action]/{id}")]
         [Authorize(AuthenticationSchemes = "Admin")]
         [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Products, ActionType = ActionType.Deleting, Definition = "Delete Product Image")]
-        public async Task<IActionResult> DeleteProductImage([FromRoute] RemoveProductImageCommandRequest removeProductImageCommandRequest, [FromQuery] string imageId)
+        public async Task<IActionResult> DeleteProductImage([FromRoute] string id, [FromQuery] string imageId)
         {
-            //Route'dan gelen id'yi yakalamadigi icin burada manuel atama yapıyoruz.
-            removeProductImageCommandRequest.ImageId = imageId;
+            RemoveProductImageCommandRequest removeProductImageCommandRequest = new()
+            {
+                Id = id,
+                ImageId = imageId
+            };
             RemoveProductImageCommandResponse response = await _mediator.Send(removeProductImageCommandRequest);
             return Ok();
         }
