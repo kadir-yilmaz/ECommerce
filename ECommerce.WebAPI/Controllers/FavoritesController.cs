@@ -1,6 +1,3 @@
-using ECommerce.Application.Consts;
-using ECommerce.Application.CustomAttributes;
-using ECommerce.Application.Enums;
 using ECommerce.Application.Features.Commands.Favorite.AddFavoriteItem;
 using ECommerce.Application.Features.Commands.Favorite.RemoveFavoriteItem;
 using ECommerce.Application.Features.Commands.Favorite.RemoveFavoriteItemByProductId;
@@ -24,7 +21,6 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpGet]
-        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Favorites, ActionType = ActionType.Reading, Definition = "Get Favorite Items")]
         public async Task<IActionResult> GetFavoriteItems([FromQuery] GetFavoriteItemsQueryRequest request)
         {
             List<GetFavoriteItemsQueryResponse> response = await _mediator.Send(request);
@@ -32,7 +28,6 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpPost]
-        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Favorites, ActionType = ActionType.Writing, Definition = "Add Favorite Item")]
         public async Task<IActionResult> AddFavoriteItem(AddFavoriteItemCommandRequest request)
         {
             AddFavoriteItemCommandResponse response = await _mediator.Send(request);
@@ -40,7 +35,6 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpDelete("{FavoriteItemId}")]
-        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Favorites, ActionType = ActionType.Deleting, Definition = "Remove Favorite Item")]
         public async Task<IActionResult> RemoveFavoriteItem([FromRoute] RemoveFavoriteItemCommandRequest request)
         {
             RemoveFavoriteItemCommandResponse response = await _mediator.Send(request);
@@ -48,7 +42,6 @@ namespace ECommerce.WebAPI.Controllers
         }
 
         [HttpDelete("product/{ProductId}")]
-        [AuthorizeDefinition(Menu = AuthorizeDefinitionConstants.Favorites, ActionType = ActionType.Deleting, Definition = "Remove Favorite Item By Product")]
         public async Task<IActionResult> RemoveFavoriteItemByProductId([FromRoute] RemoveFavoriteItemByProductIdCommandRequest request)
         {
             RemoveFavoriteItemByProductIdCommandResponse response = await _mediator.Send(request);
