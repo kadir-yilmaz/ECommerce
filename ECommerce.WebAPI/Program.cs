@@ -104,17 +104,6 @@ var app = builder.Build();
 
 app.UseDeveloperExceptionPage();
 
-Exception? startupException = null;
-
-app.Use(async (context, next) =>
-{
-    if (startupException != null)
-    {
-        throw new Exception("Application failed to start due to a database migration or seeding exception.", startupException);
-    }
-    await next();
-});
-
 app.ConfigureExceptionHandler<Program>(app.Services.GetRequiredService<ILogger<Program>>());
 
 // Configure the HTTP request pipeline.
@@ -167,11 +156,15 @@ app.MapHub<ProductHub>("/products-hub");
 app.MapHub<OrderHub>("/orders-hub");
 app.MapHub<CouponHub>("/coupons-hub");
 
-// Seed data - DB boşsa 10 ürün ekle
-try
+// Seed data - DB hazır olana kadar retry ile migrate ve seed yap
+const int maxRetries = 10;
+var retryDelay = TimeSpan.FromSeconds(5);
+
+for (var attempt = 1; attempt <= maxRetries; attempt++)
 {
-    using (var scope = app.Services.CreateScope())
+    try
     {
+        using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ECommerceDbContext>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
@@ -186,13 +179,20 @@ try
         await DataSeeder.SeedCampaignsAsync(context);
         await DataSeeder.SeedCouponsAndRewardsAsync(context);
         await DataSeeder.SeedRolesAndUsersAsync(userManager, roleManager, context, adminEmail, adminPassword);
+        break;
     }
-}
-catch (Exception ex)
-{
-    startupException = ex;
-    Log.Fatal(ex, "Database migration/seeding failed at startup.");
-    Log.CloseAndFlush();
+    catch (Exception ex) when (attempt < maxRetries)
+    {
+        Log.Warning(ex, "Database migration/seeding failed at startup (attempt {Attempt}/{MaxRetries}). Retrying in {DelaySeconds}s...",
+            attempt, maxRetries, retryDelay.TotalSeconds);
+        await Task.Delay(retryDelay);
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "Database migration/seeding failed at startup after {MaxRetries} attempts.", maxRetries);
+        Log.CloseAndFlush();
+        throw;
+    }
 }
 
 app.Run();

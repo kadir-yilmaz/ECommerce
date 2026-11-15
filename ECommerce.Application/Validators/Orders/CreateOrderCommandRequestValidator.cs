@@ -67,13 +67,27 @@ namespace ECommerce.Application.Validators.Orders
         private static bool BeValidMonth(string? month) =>
             int.TryParse(month, out var parsedMonth) && parsedMonth is >= 1 and <= 12;
 
-        private static bool BeValidYear(string? year) =>
-            int.TryParse(year, out var parsedYear) && parsedYear >= DateTime.UtcNow.Year;
+        private static bool BeValidYear(string? year)
+        {
+            if (string.IsNullOrWhiteSpace(year))
+                return false;
+
+            if (!int.TryParse(year, out var parsedYear))
+                return false;
+
+            if (parsedYear < 100)
+                parsedYear += 2000;
+
+            return parsedYear >= DateTime.UtcNow.Year;
+        }
 
         private static bool HaveFutureExpiryDate(CreateOrderCommandRequest request)
         {
             if (!int.TryParse(request.ExpireMonth, out var month) || !int.TryParse(request.ExpireYear, out var year))
                 return false;
+
+            if (year < 100)
+                year += 2000;
 
             var now = DateTime.UtcNow;
             if (year < now.Year)
